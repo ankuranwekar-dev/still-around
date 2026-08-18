@@ -1,0 +1,38 @@
+{
+  "format": "still-around/pet",
+  "version": 2,
+  "name": "Example",
+  "appearance": {
+    "species": "cat",
+    "size": 1,
+    "build": 0,
+    "earStyle": "pointed",
+    "snout": 0.35,
+    "tailStyle": "long",
+    "furLength": 0.25,
+    "furDensity": 0.6,
+    "pattern": "tabby",
+    "base": { "r": 0.604, "g": 0.525, "b": 0.455 },
+    "accent": { "r": 0.361, "g": 0.302, "b": 0.247 },
+    "eye": { "r": 0.616, "g": 0.682, "b": 0.447 },
+    "nose": { "r": 0.890, "g": 0.631, "b": 0.608 },
+    "capCoverage": 0.8,
+    "faceBlaze": 0,
+    "faceMask": 0,
+    "saddle": 0.85,
+    "chestWhite": 0.25,
+    "socks": 0,
+    "tailBands": 0,
+    "patternContrast": 0.55,
+    "patchiness": 0,
+    "collar": null,
+    "morphs": {
+      "skullWidth": 0, "muzzleLength": 0, "muzzleDepth": 0,
+      "earSet": 0, "earSize": 0, "earFold": 0,
+      "neckThickness": 0, "chestDepth": 0, "waistTuck": 0,
+      "backLength": 0, "toplineSlope": 0, "legLength": 0,
+      "hockAngle": 0, "pawSize": 0, "tailLength": 0,
+      "tailFluff": 0, "bodyMass": 0, "cheekFluff": 0
+    }
+  }
+}

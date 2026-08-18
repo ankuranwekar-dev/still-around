@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stillaround.app/schema/pet-v2.json",
+  "title": "still-around/pet v2",
+  "description": "Stub for the 3D appearance file. Version 1 is ~30 coat and build numbers. Version 2 adds morph targets and fur params (~45 numbers total). Photos are never in this file. v1 files remain valid: missing morphs default to 0 (the base mesh).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "appearance"],
+  "properties": {
+    "format": { "const": "still-around/pet" },
+    "version": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "name": { "type": "string", "maxLength": 40 },
+    "appearance": { "$ref": "#/$defs/appearance" }
+  },
+  "$defs": {
+    "rgb": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["r", "g", "b"],
+      "properties": {
+        "r": { "type": "number", "minimum": 0, "maximum": 1 },
+        "g": { "type": "number", "minimum": 0, "maximum": 1 },
+        "b": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "morphs": {
+      "type": "object",
+      "description": "0 is the licensed base mesh. ±1 are the authored extremes. A dog is not a cat with different ears: cat morphs apply to felis.glb, dog morphs to canis.glb.",
+      "additionalProperties": false,
+      "properties": {
+        "skullWidth": { "type": "number", "minimum": -1, "maximum": 1 },
+        "muzzleLength": { "type": "number", "minimum": -1, "maximum": 1 },
+        "muzzleDepth": { "type": "number", "minimum": -1, "maximum": 1 },
+        "earSet": { "type": "number", "minimum": -1, "maximum": 1 },
+        "earSize": { "type": "number", "minimum": -1, "maximum": 1 },
+        "earFold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "neckThickness": { "type": "number", "minimum": -1, "maximum": 1 },
+        "chestDepth": { "type": "number", "minimum": -1, "maximum": 1 },
+        "waistTuck": { "type": "number", "minimum": -1, "maximum": 1 },
+        "backLength": { "type": "number", "minimum": -1, "maximum": 1 },
+        "toplineSlope": { "type": "number", "minimum": -1, "maximum": 1 },
+        "legLength": { "type": "number", "minimum": -1, "maximum": 1 },
+        "hockAngle": { "type": "number", "minimum": -1, "maximum": 1 },
+        "pawSize": { "type": "number", "minimum": -1, "maximum": 1 },
+        "tailLength": { "type": "number", "minimum": -1, "maximum": 1 },
+        "tailFluff": { "type": "number", "minimum": 0, "maximum": 1 },
+        "bodyMass": { "type": "number", "minimum": -1, "maximum": 1 },
+        "cheekFluff": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "appearance": {
+      "type": "object",
+      "required": ["species", "base", "accent", "eye", "nose"],
+      "properties": {
+        "species": { "enum": ["cat", "dog"] },
+        "size": { "type": "number" },
+        "build": { "type": "number" },
+        "earStyle": { "enum": ["pointed", "rounded", "folded", "floppy"] },
+        "snout": { "type": "number" },
+        "tailStyle": { "enum": ["long", "fluffy", "curled", "stubby"] },
+        "furLength": { "type": "number", "minimum": 0, "maximum": 1 },
+        "furDensity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "earNotch": { "type": "number" },
+        "earNotchOnLeft": { "type": "boolean" },
+        "pattern": { "enum": ["solid", "tabby", "bicolour", "calico", "tuxedo", "pointed"] },
+        "base": { "$ref": "#/$defs/rgb" },
+        "accent": { "$ref": "#/$defs/rgb" },
+        "eye": { "$ref": "#/$defs/rgb" },
+        "nose": { "$ref": "#/$defs/rgb" },
+        "undercoat": { "$ref": "#/$defs/rgb" },
+        "capCoverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "faceBlaze": { "type": "number", "minimum": 0, "maximum": 1 },
+        "faceMask": { "type": "number", "minimum": 0, "maximum": 1 },
+        "saddle": { "type": "number", "minimum": 0, "maximum": 1 },
+        "chestWhite": { "type": "number", "minimum": 0, "maximum": 1 },
+        "socks": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tailBands": { "type": "number", "minimum": 0, "maximum": 1 },
+        "patternContrast": { "type": "number", "minimum": 0, "maximum": 1 },
+        "patchiness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "collar": { "type": ["object", "null"] },
+        "morphs": { "$ref": "#/$defs/morphs" }
+      }
+    }
+  }
+}

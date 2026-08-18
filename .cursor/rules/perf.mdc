@@ -1,0 +1,12 @@
+---
+description: Frame-time budget for the realtime 3D overlay. Measure it; do not eyeball it.
+alwaysApply: true
+---
+
+# Perf
+
+p95 frame-time budget is 8ms at 512px. Run `node tools/perf3d.js` after any render-path change. Exit non-zero over budget is a failed gate, not a warning to ignore.
+
+The overlay runs all day. Idle at LOD 0 must stay under 3% CPU and 8% GPU. Drop to 30fps and cut shells when unfocused. Pause entirely on battery saver.
+
+WebGPU is preferred; WebGL2 fallback is tested every phase, never "later". Headless Chromium needs `--use-angle=swiftshader` (or a real GPU via `headless: "new"`) or you get a black frame.

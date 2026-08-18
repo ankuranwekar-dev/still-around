@@ -1,0 +1,12 @@
+---
+description: Every pixel comes from the renderer. No generated, stock, or neural art.
+alwaysApply: true
+---
+
+# No generated art
+
+No image generation, no neural texture synthesis, no stock art, no sprite sheets.
+
+Every pixel comes from the renderer. Appearance is numbers in a `.pet.json`, not pixels.
+
+A generated still cannot walk, blink, or track a cursor, and it would be a generic cat. Neural texture synthesis would also need a server, which this project does not have.

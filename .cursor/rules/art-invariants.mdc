@@ -1,0 +1,55 @@
+---
+description: Hard-won art and measurement invariants. An agent will re-make every one of these if they are not in front of it.
+alwaysApply: true
+---
+
+# Art invariants
+
+These were each paid for once. Do not rediscover them in GLSL, in a new painter, or in a "simpler" analyzer.
+
+## Anatomy and species
+
+- A dog is not a cat with different ears. Separate mesh, separate skeleton proportions, separate groom. Never parameterise one into the other.
+- Dogs read as dogs from the skeleton: legs that stand them clear of the ground, a deep chest over a tucked waist, a topline sloping from shoulder to hip, hocked back legs.
+- Tail sanity check on every new view. The side-view tail was invisible for months (origin inside the body capsule, sign error on `dir = -1`). Rig it, render walk and trot, and look for a tail.
+- The profile view keeps a smaller, set-back far eye. Drawing only the near eye was read as the far eye being shut while walking.
+
+## Shading and colour
+
+- Shading keys off the whole silhouette, not each shape's edge. Per-shape distance puts a dark rim wherever a leg meets the body (inflated sausages). `silhouetteDepth` was the 2D fix; in 3D do not relit per-shell as if each were a separate object.
+- Fur has a gamut: near-neutral, or warm between about 12° and 60°. Saturated greens are floors and cardboard; saturated pure reds are beds and cushions. Clamp incoming coat colour. This lives in the material, not only in the analyzer.
+- A near-black coat must not read as a hole in a dark page. `SHADOW_FLOOR` in `engine/coat.js` was a channel-wise luminance floor; in 3D this is a tonemap shoulder, not a clamp-to-grey. Keep the behaviour, delete the hack.
+- Muted irises. Saturated irises read as neon at any resolution.
+- Two-layer coat: undercoat colour beneath guard-hair colour. Real fur does not look painted.
+
+## Markings live in body coordinates
+
+- Markings are bound to body space (along-body `u`, around-body `v`, region IDs), never screen space. This is `Part` and the region map, promoted to a UV atlas in 3D.
+- A blaze is not "white". It is white up the middle with colour either side. Never use total white fraction. Measure the centre band against the flanks.
+- No seam line around the muzzle. `['muzzle','head']` drew a line no cat has. In 3D that is a UV or normal-map seam — check it explicitly.
+
+## Measurement (analyzer)
+
+- k-means on RGB clusters a coat by brightness, not colour. Use `chromaClusters`: divide brightness out, take the 75th-percentile brightness per cluster, weight × (0.15 + sat)^1.5.
+- Otsu is not enough to find white on a close-up. The threshold must also sit above the animal's own median luminance.
+- Do not guess iris colour. Ginger cheek fur measures 0.66–0.83 saturation. Ask the person to click the eye.
+- Asking beats classifying. Shape scoring put a photo of a cat's back in the face slot at 0.92 confidence. Keep guided capture (`analyzer/shots.js`) and "which one is looking at you?"
+- `readFromShots` reads each parameter from the shot that can *see* it. Averaging every measurement over every photo is noise.
+- Never use SAM's own confidence. It was 0.97 on a fridge. Score candidates by box fill minus spill.
+- Bake EXIF orientation. Unbaked photos measure the wrong axis.
+
+## Eyes, blinks, motion
+
+- Blink with a floor: `0.42 + 0.58 * open`. Linear eye-height scaling collapses squints into dark smudges.
+- Both eyes share a phase. One eye open and one shut was a real bug; in 3D it returns as two independently-driven blend shapes. Drive both from one value.
+- Idle stillness is a feature. Port `stage.js` weights (sit 26, sleep 7, …). A pet that constantly performs is exhausting to have on screen.
+- Foot slide is the most common realism break in web 3D animals. Measure it.
+
+## Compositing and sizing
+
+- Canvas wants straight alpha, CoreGraphics wants premultiplied. Backwards is a dark halo around the whole animal.
+- No fixed grid. Draw at `cssPixels × devicePixelRatio` every frame. The 2D engine's pixelation was upscaling a capped cache, not a filter bug.
+
+## Honest ceiling
+
+- At overlay size (300–700px) a viewer should read a real animal. A 4K frozen close-up will not fool anyone. It is their breed and colouring, recognisable — not a forensic duplicate. Do not overpromise in copy or in a shader comment.

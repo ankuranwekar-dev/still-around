@@ -1,0 +1,12 @@
+---
+description: Photos never leave the device. No server. No user-data network calls.
+alwaysApply: true
+---
+
+# Privacy
+
+No network calls carrying user data. No server. Photos never leave the device.
+
+`.pet.json` is a few hundred bytes of numbers — emailable, no account.
+
+Model weights from a CDN are the only remote fetch, and only when someone starts the studio. The landing page does not load them.

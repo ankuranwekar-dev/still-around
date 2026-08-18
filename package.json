@@ -11,6 +11,8 @@
   "scripts": {
     "start": "electron .",
     "sheet": "node tools/sheet.js",
+    "shot3d": "node tools/shot3d.js",
+    "perf3d": "node tools/perf3d.js",
     "likeness": "node tools/test-analyzer.js",
     "web": "node tools/serve.js 8731",
     "dist:mac": "electron-builder --mac",
@@ -20,7 +22,8 @@
   "devDependencies": {
     "@huggingface/transformers": "^4.2.0",
     "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "playwright": "^1.62.1"
   },
   "build": {
     "appId": "app.stillaround.desktop",
@@ -81,5 +84,8 @@
       ],
       "category": "Utility"
     }
+  },
+  "dependencies": {
+    "three": "^0.185.1"
   }
 }

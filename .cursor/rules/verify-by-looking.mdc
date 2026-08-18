@@ -1,0 +1,15 @@
+---
+description: Art changes are done only when a rendered contact sheet has been inspected.
+alwaysApply: true
+---
+
+# Verify by looking
+
+Any change to `engine3/`, a shader, a groom, a rig, or `engine/` must end with rendering a contact sheet and inspecting it.
+
+Never report an art change as done on the basis of code reading or a passing unit test. The agent cannot see; the harness is its eyes.
+
+- 3D: `node tools/shot3d.js` (and `--sheet <name>` once named sheets exist). Attach the PNG. Look at it.
+- 2D (until swapped): `node tools/sheet.js`.
+- After a render-path change, also run `node tools/perf3d.js`.
+- If the 64px greyscale silhouette does not make the species unmistakable, the geometry is wrong. Say so. Do not tune a shader around it.
