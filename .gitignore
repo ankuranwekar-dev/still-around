@@ -1,0 +1,13 @@
+node_modules/
+release/
+.DS_Store
+*.log
+.env
+.env.*
+*.local
+playwright-report/
+test-results/
+/sheet.png
+/tmp/
+tools/out/
+.cache/

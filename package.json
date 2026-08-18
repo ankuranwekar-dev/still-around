@@ -1,0 +1,85 @@
+{
+  "name": "still-around",
+  "productName": "Still Around",
+  "version": "1.0.0",
+  "description": "A small animated version of your cat or dog, living on your desktop.",
+  "type": "module",
+  "private": true,
+  "main": "desktop/src/main/main.js",
+  "author": "Still Around",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "sheet": "node tools/sheet.js",
+    "likeness": "node tools/test-analyzer.js",
+    "web": "node tools/serve.js 8731",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist": "electron-builder --mac --win"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.stillaround.desktop",
+    "productName": "Still Around",
+    "artifactName": "StillAround-${os}-${version}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "desktop/build"
+    },
+    "files": [
+      "desktop/**/*",
+      "engine/**/*",
+      "analyzer/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "desktop/build/icon.icns",
+      "darkModeSupport": true,
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSHumanReadableCopyright": "Free to use. Nothing is collected."
+      }
+    },
+    "dmg": {
+      "title": "Still Around"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "desktop/build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Still Around"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
+  }
+}

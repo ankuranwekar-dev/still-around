@@ -1,0 +1,77 @@
+name: Build desktop apps
+
+# The Mac build has to run on a Mac and the Windows build has to run on Windows:
+# electron-builder can cross-compile a bare directory, but not a DMG or an NSIS
+# installer, so each one is built on its own runner. Tagging a version is the
+# whole release process.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            script: dist:mac
+            artifact: mac
+          - os: windows-latest
+            script: dist:win
+            artifact: windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The icons are generated from the engine rather than committed as binaries.
+      # iconutil is macOS-only, so the .icns only appears on that runner — which is
+      # the only runner that needs it.
+      - run: node tools/make-icons.js
+
+      # A quick check that the engine still renders before spending time packaging.
+      - run: node tools/sheet.js sheet.png
+
+      - run: npm run ${{ matrix.script }}
+        env:
+          # Unsigned builds. Signing needs an Apple Developer certificate and a
+          # Windows code-signing certificate; without them macOS shows a
+          # right-click-to-open warning on first launch and SmartScreen warns on
+          # Windows. Add secrets and set CSC_LINK / CSC_KEY_PASSWORD to sign.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: still-around-${{ matrix.artifact }}
+          path: |
+            release/*.dmg
+            release/*.exe
+          if-no-files-found: error
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.dmg
+            release/*.exe
+          draft: true
+          body: |
+            Download the build for your machine below, then open the `.pet.json`
+            file you saved from the website.
+
+            These builds are not code-signed. On macOS, right-click the app and
+            choose Open the first time. On Windows, choose "More info" then
+            "Run anyway" if SmartScreen appears.
