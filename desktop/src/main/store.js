@@ -7,6 +7,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { app } from 'electron'
+import { migratePet } from '../../../engine3/appearance.js'
 
 const file = () => path.join(app.getPath('userData'), 'pets.json')
 
@@ -47,8 +48,8 @@ export async function saveState (state) {
 /// field would otherwise surface as a blank window with no explanation.
 function validate (pet) {
   if (!pet || typeof pet !== 'object') throw new Error('The file is not a pet.')
-  const appearance = pet.appearance
-  if (!appearance || typeof appearance !== 'object') throw new Error('It has no appearance in it.')
+  const migrated = migratePet(pet)
+  const appearance = migrated.appearance
   for (const key of ['base', 'accent', 'eye', 'nose']) {
     const c = appearance[key]
     if (!c || typeof c.r !== 'number') throw new Error(`Its ${key} colour is missing.`)
@@ -58,7 +59,7 @@ function validate (pet) {
   }
   return {
     id: `pet-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`,
-    name: typeof pet.name === 'string' && pet.name.trim() ? pet.name.trim().slice(0, 40) : 'My pet',
+    name: migrated.name,
     enabled: true,
     appearance,
   }

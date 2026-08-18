@@ -3,9 +3,16 @@
 <head>
 <meta charset="utf-8">
 <title>Still Around</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "../../../node_modules/three/build/three.webgpu.js",
+    "three/webgpu": "../../../node_modules/three/build/three.webgpu.js",
+    "three/tsl": "../../../node_modules/three/build/three.tsl.js"
+  }
+}
+</script>
 <style>
-  /* The window is transparent and click-through; nothing here may paint a
-     background, or the whole desktop would be covered by a grey sheet. */
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
   canvas { display: block; width: 100vw; height: 100vh; }
 </style>

@@ -24,10 +24,10 @@
 // version asks the person to click their pet's eye instead. One gesture, exact
 // answer, and no pretending.
 
-import {
-  Species, CoatPattern, EarStyle, TailStyle, starting, rgb, toHex,
+import { starting, Species, CoatPattern, EarStyle, TailStyle, rgb, toHex,
   luminance, saturation, hue,
 } from '../engine/appearance.js'
+import { zeroMorphs } from '../engine3/species/profiles.js'
 import { otsu } from './segment.js'
 
 const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v))
@@ -443,6 +443,7 @@ export function readAppearance (photos, { species = Species.cat, eye = null } = 
 export function readFromShots (shots, { species = Species.cat, eye = null } = {}) {
   const notes = []
   const a = starting(species)
+  a.morphs = zeroMorphs()
   const measured = new Set()
 
   const read = id => {
@@ -476,6 +477,15 @@ export function readFromShots (shots, { species = Species.cat, eye = null } = {}
     a.build = clamp((side.aspect - 1.15) * 0.9, -0.6, 0.9)
     if (species === Species.dog) a.size = clamp(1.0 + (side.aspect - 1.2) * 0.35, 0.8, 1.35)
     a.tailBands = a.patternContrast > 0.38 ? clamp(a.patternContrast * 0.8) : 0
+    a.morphs.backLength = clamp((side.aspect - 1.2) * 0.9, -1, 1)
+    a.morphs.bodyMass = clamp(a.build, -1, 1)
+    a.morphs.chestDepth = clamp(a.build * 0.5 + (species === Species.dog ? 0.25 : 0), -1, 1)
+    a.morphs.legLength = species === Species.dog
+      ? clamp((a.size - 1.05) * 2.2, -1, 1)
+      : clamp((a.size - 1) * 1.2, -1, 1)
+    a.morphs.waistTuck = species === Species.dog ? clamp(0.3 - a.build * 0.2, 0, 1) : 0.05
+    a.morphs.toplineSlope = species === Species.dog ? 0.35 : 0.05
+    a.morphs.muzzleLength = clamp((a.snout - 0.4) * 1.8, -1, 1)
     for (const k of ['patternContrast', 'patchiness', 'saddle', 'build']) measured.add(k)
     notes.push(`stripes ${Math.round(a.patternContrast * 100)}%, patches ${Math.round(a.patchiness * 100)}% from the side photo`)
   }
@@ -491,6 +501,7 @@ export function readFromShots (shots, { species = Species.cat, eye = null } = {}
     a.faceMask = clamp((side ? side.stripiness : face.stripiness) * 0.6)
     for (const k of ['capCoverage', 'faceBlaze', 'faceMask']) measured.add(k)
     notes.push(`face markings from the face photo — ${Math.round(face.whiteFraction * 100)}% white`)
+    a.morphs.skullWidth = clamp((1.05 - face.aspect) * 0.8, -1, 1)
   }
 
   if (front) {
@@ -508,6 +519,8 @@ export function readFromShots (shots, { species = Species.cat, eye = null } = {}
     a.tailBands = clamp(tail.stripiness * 0.9)
     measured.add('tailBands')
     notes.push(`tail rings ${Math.round(a.tailBands * 100)}% from the tail photo`)
+    a.morphs.tailLength = clamp(tail.aspect * 0.25 - 0.1, -1, 1)
+    a.morphs.tailFluff = clamp(a.furLength, 0, 1)
   }
 
   if (eye) {

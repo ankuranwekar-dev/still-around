@@ -1,0 +1,31 @@
+# 3D harness on pull requests. The Mac runner has SwiftShader; the 8ms overlay
+# budget is measured on real GPU locally via `npm run perf3d`.
+
+name: Harness
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  shot3d:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - run: node tools/shot3d.js --gl swiftshader --sheet morphs morphs.png
+      - run: node tools/shot3d.js --gl swiftshader --sheet pets pets.png
+      - run: node tools/perf3d.js --gl swiftshader --budget 50
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contact-sheets
+          path: |
+            morphs.png
+            pets.png

@@ -11,6 +11,11 @@ import { withHarness, flags, dataUrlToBuffer } from './harness3d.js'
 
 const SHEETS = {
   sphere: { scene: 'sphere' },
+  morphs: { scene: 'morphs' },
+  pets: { scene: 'pets' },
+  face: { scene: 'face' },
+  walk: { scene: 'walk' },
+  fur: { scene: 'fur' },
 }
 
 const args = flags()

@@ -1,0 +1,17 @@
+{
+  "description": "Joint names are a schema. Never rename. Cat and dog share names so clips and look-at code stay species-agnostic; bind poses and bone lengths do not.",
+  "bones": [
+    "root",
+    "hips",
+    "spine_1", "spine_2", "spine_3", "spine_4", "spine_5",
+    "neck_1", "neck_2", "neck_3",
+    "head", "jaw",
+    "ear_L_1", "ear_L_2", "ear_R_1", "ear_R_2",
+    "eye_L", "eye_R",
+    "shoulder_L", "upper_FL", "lower_FL", "wrist_FL", "toe_FL",
+    "shoulder_R", "upper_FR", "lower_FR", "wrist_FR", "toe_FR",
+    "hip_L", "thigh_BL", "shin_BL", "hock_BL", "foot_BL", "toe_BL",
+    "hip_R", "thigh_BR", "shin_BR", "hock_BR", "foot_BR", "toe_BR",
+    "tail_1", "tail_2", "tail_3", "tail_4", "tail_5", "tail_6", "tail_7", "tail_8"
+  ]
+}

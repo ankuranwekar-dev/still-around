@@ -1,0 +1,33 @@
+{
+  "format": "still-around/procedural-mesh",
+  "species": "cat",
+  "source": "engine3/mesh.js",
+  "licence": "MIT",
+  "note": "Original geometry, not a marketplace asset. Replace with a licensed glb via art/scripts/export.py when §2 is resolved.",
+  "bind": {
+    "species": "cat",
+    "height": 0.24,
+    "bodyLen": 0.3,
+    "chestR": 0.055,
+    "waistR": 0.048,
+    "hipR": 0.05,
+    "topline": 0.012,
+    "neckLen": 0.045,
+    "neckR": 0.028,
+    "headR": 0.046,
+    "headH": 0.042,
+    "muzzleLen": 0.032,
+    "muzzleR": 0.02,
+    "earH": 0.048,
+    "earW": 0.018,
+    "earSet": 0.7,
+    "earFold": 0,
+    "floppy": false,
+    "legLen": 0.1,
+    "hock": 0.28,
+    "pawR": 0.016,
+    "tailLen": 0.26,
+    "tailR": 0.011,
+    "tailSegs": 8
+  }
+}

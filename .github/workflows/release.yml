@@ -44,6 +44,15 @@ jobs:
       # A quick check that the engine still renders before spending time packaging.
       - run: node tools/sheet.js sheet.png
 
+      - run: npx playwright install chromium
+        if: runner.os == 'macOS'
+
+      - run: node tools/shot3d.js --gl swiftshader --sheet morphs morphs.png
+        if: runner.os == 'macOS'
+
+      - run: node tools/perf3d.js --gl swiftshader --budget 50
+        if: runner.os == 'macOS'
+
       - run: npm run ${{ matrix.script }}
         env:
           # Unsigned builds. Signing needs an Apple Developer certificate and a

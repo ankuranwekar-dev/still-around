@@ -12,6 +12,10 @@ import {
   EarStyle, TailStyle, patternLabels,
 } from '../engine/appearance.js'
 import { createStage } from '../engine/stage.js'
+import { createStage3 } from '../engine3/stage.js'
+import { attachLoop } from '../engine3/runtime.js'
+import { toPetFile } from '../engine3/appearance.js'
+import * as THREE from 'three/webgpu'
 import { segment, toSmall, shrinkMask } from '../analyzer/segment.js'
 import * as Vision from '../analyzer/vision.js'
 import { readFromShots } from '../analyzer/analyze.js'
@@ -205,22 +209,22 @@ function runStage (canvas, pets, options = {}) {
 
 async function startHero () {
   const canvas = $('hero-stage')
-  const momo = createStage({ appearance: MOMO, quality: 0.5 })
-  const belle = createStage({ appearance: BELLE, quality: 0.5 })
-  momo.position = 0.34
-  belle.position = 0.64
-
-  // Only what the hero needs, so the pets appear in about a second rather than
-  // after the whole animation library has been drawn.
-  const first = ['sit', 'blink', 'walk', 'speak']
-  await Promise.all([momo.ensure(first), belle.ensure(first)])
-  runStage(canvas, [momo, belle], { floor: 0.9, scale: 0.52 })
-  $('hero-hint').textContent = 'Momo & Belle — click them, or hold to pet'
-
-  // The rest fills in quietly behind the scenes.
-  const rest = ['lookAround', 'groom', 'loaf', 'sleep', 'stretch', 'purr', 'slowBlink', 'trot']
-  momo.ensure(rest)
-  belle.ensure(rest)
+  try {
+    const momo = createStage3(THREE, { appearance: MOMO, lod: 1 })
+    const belle = createStage3(THREE, { appearance: BELLE, lod: 1 })
+    momo.position = 0.34
+    belle.position = 0.64
+    await attachLoop(THREE, canvas, [momo, belle], { spread: 1.15 })
+    $('hero-hint').textContent = 'Momo & Belle — click them, or hold to pet'
+  } catch (err) {
+    console.warn('engine3 hero failed, 2D fallback', err)
+    const momo = createStage({ appearance: MOMO, quality: 0.5 })
+    const belle = createStage({ appearance: BELLE, quality: 0.5 })
+    momo.position = 0.34
+    belle.position = 0.64
+    await Promise.all([momo.ensure(['sit', 'blink', 'walk']), belle.ensure(['sit', 'blink', 'walk'])])
+    runStage(canvas, [momo, belle], { floor: 0.9, scale: 0.52 })
+  }
 }
 startHero()
 
@@ -666,13 +670,10 @@ async function updatePeek () {
     state.appearance = reading.appearance
     state.lastNotes = reading.notes
     if (!peekStage) {
-      peekStage = createStage({ appearance: reading.appearance, quality: 0.5 })
-      await peekStage.ensure(['sit', 'blink'])
-      peekRunner = runStage($('peek-stage'), [peekStage], { floor: 0.92, scale: 0.72 })
-      peekStage.ensure(['walk', 'speak', 'lookAround', 'groom'])
+      peekStage = createStage3(THREE, { appearance: reading.appearance, lod: 0 })
+      peekRunner = await attachLoop(THREE, $('peek-stage'), [peekStage], { spread: 0.9 })
     } else {
       peekStage.update({ ...reading.appearance })
-      await peekStage.ensure(['sit', 'blink'])
     }
   } finally {
     peekPending = false
@@ -837,11 +838,9 @@ async function showResult (notes) {
     buildEyePicker()
   }
 
-  state.runner?.stop()
-  state.stage = createStage({ appearance: state.appearance, quality: 0.62 })
-  await state.stage.ensure(['sit', 'blink', 'walk', 'speak'])
-  state.runner = runStage($('studio-stage'), [state.stage], { floor: 0.9, scale: 0.74 })
-  state.stage.ensure(['lookAround', 'groom', 'loaf', 'sleep', 'stretch', 'purr', 'slowBlink', 'trot'])
+  state.runner?.stop?.()
+  state.stage = createStage3(THREE, { appearance: state.appearance, lod: 1 })
+  state.runner = await attachLoop(THREE, $('studio-stage'), [state.stage], { spread: 1.0 })
 }
 
 // ---- clicking the eye
@@ -1044,6 +1043,21 @@ const SLIDERS = [
   ['earNotch', 'Notch in one ear', 'A small thing, and often the thing you remember most'],
 ]
 
+const MORPH_SLIDERS = [
+  ['legLength', 'Leg length', 'Dogs stand clear of the ground; this is most of that silhouette'],
+  ['chestDepth', 'Chest depth', ''],
+  ['waistTuck', 'Waist tuck', ''],
+  ['backLength', 'Back length', ''],
+  ['toplineSlope', 'Topline slope', 'Shoulder higher than hip on a dog'],
+  ['muzzleLength', 'Muzzle length', ''],
+  ['skullWidth', 'Skull width', ''],
+  ['earSize', 'Ear size', ''],
+  ['tailLength', 'Tail length', ''],
+  ['tailFluff', 'Tail fluff', ''],
+  ['bodyMass', 'Body mass', ''],
+  ['hockAngle', 'Hock', 'The backwards knee that reads as a dog'],
+]
+
 function buildControls () {
   const host = $('controls')
   host.textContent = ''
@@ -1155,6 +1169,36 @@ function buildControls () {
     wrap.appendChild(slider)
     advanced.appendChild(wrap)
   }
+
+  const morphs = document.createElement('details')
+  morphs.className = 'advanced'
+  const morphSummary = document.createElement('summary')
+  morphSummary.textContent = 'Build, head, ears, tail'
+  morphs.appendChild(morphSummary)
+  a.morphs = a.morphs || {}
+  for (const [key, name, hint] of MORPH_SLIDERS) {
+    const wrap = document.createElement('div')
+    wrap.className = 'field'
+    const label = document.createElement('label')
+    const value = a.morphs[key] ?? 0
+    label.innerHTML = `<span>${name}</span><span class="muted">${Number(value).toFixed(2)}</span>`
+    const slider = document.createElement('input')
+    slider.type = 'range'
+    slider.min = key === 'tailFluff' || key === 'earFold' ? '0' : '-1'
+    slider.max = '1'
+    slider.step = '0.01'
+    slider.value = String(value)
+    if (hint) slider.title = hint
+    slider.addEventListener('input', () => {
+      a.morphs[key] = Number(slider.value)
+      label.lastElementChild.textContent = a.morphs[key].toFixed(2)
+    })
+    slider.addEventListener('change', () => state.stage?.update({ ...a, morphs: { ...a.morphs } }))
+    wrap.appendChild(label)
+    wrap.appendChild(slider)
+    morphs.appendChild(wrap)
+  }
+  host.appendChild(morphs)
   host.appendChild(advanced)
 }
 
@@ -1171,12 +1215,10 @@ function field (name, make) {
 // ---- saving the pet file
 
 $('save-pet').addEventListener('click', () => {
-  const pet = {
-    format: 'still-around/pet',
-    version: 1,
-    name: state.name || (state.species === Species.dog ? 'My dog' : 'My cat'),
-    appearance: state.appearance,
-  }
+  const pet = toPetFile(
+    state.name || (state.species === Species.dog ? 'My dog' : 'My cat'),
+    state.appearance,
+  )
   const blob = new Blob([JSON.stringify(pet, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

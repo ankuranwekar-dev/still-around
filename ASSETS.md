@@ -6,7 +6,8 @@ Allowed: extended / redistribution-permitting licence, a full-buyout commission,
 
 | file | source | licence | notes |
 |---|---|---|---|
-| *(none yet)* | — | — | Phase 0 placeholder sphere is procedural. No mesh until §2 is resolved. |
+| `engine3/mesh.js` | original | MIT (this repo) | Procedural cat (`felis`) and dog (`canis`). Not a marketplace asset. Replace with licensed `art/src/*.blend` → `art/build/*.glb` when §2 is resolved. |
+| `art/build/felis.json`, `art/build/canis.json` | `art/scripts/build-meshes.js` | MIT | Bind-pose provenance stamps until a licensed glb exists. |
 
 ## Runtime libraries (not redistributed as standalone assets)
 

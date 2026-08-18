@@ -13,6 +13,8 @@
     "sheet": "node tools/sheet.js",
     "shot3d": "node tools/shot3d.js",
     "perf3d": "node tools/perf3d.js",
+    "art:export": "blender --background --python art/scripts/export.py || node art/scripts/build-meshes.js",
+    "art:meshes": "node art/scripts/build-meshes.js",
     "likeness": "node tools/test-analyzer.js",
     "web": "node tools/serve.js 8731",
     "dist:mac": "electron-builder --mac",
@@ -36,7 +38,10 @@
     "files": [
       "desktop/**/*",
       "engine/**/*",
+      "engine3/**/*",
       "analyzer/**/*",
+      "schema/**/*",
+      "node_modules/three/**/*",
       "package.json",
       "!**/*.map"
     ],
@@ -78,6 +83,14 @@
       "createDesktopShortcut": true,
       "shortcutName": "Still Around"
     },
+    "fileAssociations": [
+      {
+        "ext": "pet",
+        "name": "Still Around Pet",
+        "description": "A Still Around pet",
+        "role": "Editor"
+      }
+    ],
     "linux": {
       "target": [
         "AppImage"

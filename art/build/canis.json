@@ -1,0 +1,33 @@
+{
+  "format": "still-around/procedural-mesh",
+  "species": "dog",
+  "source": "engine3/mesh.js",
+  "licence": "MIT",
+  "note": "Original geometry, not a marketplace asset. Replace with a licensed glb via art/scripts/export.py when §2 is resolved.",
+  "bind": {
+    "species": "dog",
+    "height": 0.36,
+    "bodyLen": 0.42,
+    "chestR": 0.078,
+    "waistR": 0.046,
+    "hipR": 0.058,
+    "topline": 0.048,
+    "neckLen": 0.09,
+    "neckR": 0.032,
+    "headR": 0.04,
+    "headH": 0.038,
+    "muzzleLen": 0.085,
+    "muzzleR": 0.024,
+    "earH": 0.075,
+    "earW": 0.022,
+    "earSet": 0.82,
+    "earFold": 0,
+    "floppy": true,
+    "legLen": 0.19,
+    "hock": 0.58,
+    "pawR": 0.018,
+    "tailLen": 0.22,
+    "tailR": 0.013,
+    "tailSegs": 8
+  }
+}

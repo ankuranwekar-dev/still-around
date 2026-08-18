@@ -130,8 +130,8 @@ async function runPerf ({ frames = 600, size = 512, dpr = 2 } = {}) {
     if (forceWebGL) throw err
     worldPack = await makeWorld({ cell: size, dpr, forceWebGL: true })
   }
-  const { renderer, backend, gpu, world } = worldPack
-  world.setView({ yaw: Math.PI / 5, pitch: 0.18 })
+  const { renderer, backend, gpu, world, views } = worldPack
+  if (world.setView) world.setView(views?.[0] || { yaw: Math.PI / 5, pitch: 0.18 })
 
   const times = []
   let drawCalls = 0

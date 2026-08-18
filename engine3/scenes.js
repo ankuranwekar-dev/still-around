@@ -3,6 +3,11 @@
 
 const loaders = {
   sphere: () => import('./scenes/sphere.js'),
+  morphs: () => import('./scenes/morphs.js'),
+  pets: () => import('./scenes/pets.js'),
+  face: () => import('./scenes/face.js'),
+  walk: () => import('./scenes/walk.js'),
+  fur: () => import('./scenes/fur.js'),
 }
 
 export function listScenes () {
