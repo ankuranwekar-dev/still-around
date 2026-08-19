@@ -41,6 +41,7 @@
       "engine3/**/*",
       "analyzer/**/*",
       "schema/**/*",
+      "web/config.js",
       "node_modules/three/**/*",
       "package.json",
       "!**/*.map"

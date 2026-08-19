@@ -15,6 +15,7 @@ import { createOverlay, getOverlay, setInteractive, setVisible, send } from './o
 import { createTray, refreshTray } from './tray.js'
 import { loadState, saveState, importPetFile, removePet } from './store.js'
 import { setOpenAtLogin, getOpenAtLogin } from './login-item.js'
+import { SITE } from '../../../web/config.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '../../..')
@@ -93,7 +94,10 @@ app.whenReady().then(async () => {
       refreshTray()
     },
     getOpenAtLogin,
-    onMakeOne: () => shell.openExternal('https://stillaround.app/#make'),
+    // No domain yet — the repository page is at least a real, working link
+    // rather than one pointing nowhere. Update SITE.siteUrl in web/config.js
+    // once the site has a home and this follows automatically.
+    onMakeOne: () => shell.openExternal(SITE.siteUrl ? `${SITE.siteUrl}#make` : SITE.downloads.source),
     onQuit: () => app.quit(),
   })
 

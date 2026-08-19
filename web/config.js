@@ -11,13 +11,18 @@
 // visitor uploads is read inside their own browser tab and never sent anywhere.
 
 export const SITE = {
+  /// The site itself, once it has a domain. The desktop app's tray menu opens
+  /// this for "Make one" — someone testing the app without ever having visited
+  /// the site — falling back to the repository below if it is still blank.
+  siteUrl: '',
+
   /// Where the desktop builds live. Point these at a GitHub release once
   /// .github/workflows/release.yml has run; until then the buttons explain that
   /// the build is not out yet rather than 404ing.
   downloads: {
     mac: '', // e.g. 'https://github.com/you/still-around/releases/latest/download/StillAround-mac.dmg'
     windows: '', // e.g. '.../StillAround-win.exe'
-    source: 'https://github.com/', // repository page
+    source: 'https://github.com/ankuranwekar-dev/still-around', // repository page
   },
 
   /// A tip jar, not a checkout. Ko-fi, Buy Me a Coffee and GitHub Sponsors all
