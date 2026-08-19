@@ -4,8 +4,7 @@ A small animated version of your cat or dog that lives on your desktop while you
 work. Give it a few photos, it measures their colours and markings, and you get
 your animal — pottering about, dozing off, occasionally asking to be fed.
 
-Built for two cats. Momo, a ginger-and-white tabby, died in 2025. Belle, a
-calico, died in May 2026.
+Built in memory of two cats: Momo, a ginger tabby, and Belle, a calico.
 
 **Free, no account, and nothing is uploaded.** The website is static files; the
 measuring happens in the visitor's own browser. There is no server to send a
