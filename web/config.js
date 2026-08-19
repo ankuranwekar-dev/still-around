@@ -1,11 +1,5 @@
 // Everything you need to fill in before the site goes live, in one place.
 //
-// Until `downloads.mac` and `downloads.windows` point at real files, the two
-// download buttons say "Coming soon" — which is honest, but it also means the
-// thing the site is for cannot be had. Publishing them is the one remaining
-// blocker: push a `v*` tag so .github/workflows/release.yml builds the DMG and
-// the EXE, then paste the two release URLs in below.
-//
 // None of these are secrets — the whole site is static and there is no server, so
 // there is nowhere for a secret to live and nothing that could leak. Anything a
 // visitor uploads is read inside their own browser tab and never sent anywhere.
@@ -16,12 +10,18 @@ export const SITE = {
   /// the site — falling back to the repository below if it is still blank.
   siteUrl: '',
 
-  /// Where the desktop builds live. Point these at a GitHub release once
-  /// .github/workflows/release.yml has run; until then the buttons explain that
-  /// the build is not out yet rather than 404ing.
+  /// Where the desktop builds live.
+  ///
+  /// These point at the v1.0.0 tag specifically, because artifactName in
+  /// package.json bakes the version into the filename
+  /// (StillAround-mac-1.0.0.dmg) — the /releases/latest/download/ alias
+  /// would silently 404 the moment a new version tag changes that filename.
+  /// Update both URLs by hand on every release until artifactName drops
+  /// ${version}, at which point /latest/download/ becomes safe to use and
+  /// this stops being a manual step.
   downloads: {
-    mac: '', // e.g. 'https://github.com/you/still-around/releases/latest/download/StillAround-mac.dmg'
-    windows: '', // e.g. '.../StillAround-win.exe'
+    mac: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.0.0/StillAround-mac-1.0.0.dmg',
+    windows: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.0.0/StillAround-win-1.0.0.exe',
     source: 'https://github.com/ankuranwekar-dev/still-around', // repository page
   },
 
