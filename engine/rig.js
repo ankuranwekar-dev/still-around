@@ -122,7 +122,7 @@ function tailChain (x, y, dir, p, a) {
   return out
 }
 
-function ears (hx, hy, hrx, hry, p, a) {
+function ears (hx, hy, hrx, hry, p, a, profile = false) {
   const out = []
 
   for (const isLeft of [true, false]) {
@@ -131,26 +131,44 @@ function ears (hx, hy, hrx, hry, p, a) {
     const outer = isLeft ? Part.earL : Part.earR
     const inner = isLeft ? Part.earInL : Part.earInR
 
+    // Authoring assumes facing right, same as the eyes in face() below: s === 1
+    // is the near side, s === -1 the far one. Drawn full size and mirrored, the
+    // far ear in profile reads as a second, identical ear stuck on the wrong
+    // side rather than the same ear seen from further round — so it shrinks and
+    // slides back and down, tucking partway behind the skull, the same
+    // treatment the far eye already gets.
+    const far = profile && s < 0
+    const earScale = far ? 0.56 : 1
+    const setX = far ? -hrx * 0.5 : 0
+    const setY = far ? hry * 0.22 : 0
+
     if (a.earStyle === EarStyle.floppy) {
       // A dog's ear hangs from the *top* of the skull and falls past the jaw.
       // Hung from the side it reads as earmuffs.
       // Hung from just below the top of the skull and falling past the jaw.
       // Narrow: a wide ellipse here reads as earmuffs, which is what the first
       // version looked like.
-      const ex = hx + s * hrx * 0.80
+      //
+      // In profile the near ear's usual attachment sits almost exactly where
+      // the muzzle bulge gets pushed forward to (see sideViewDog), and the
+      // muzzle paints over it since it is added after the ears. Pulling the
+      // near ear back toward the eye — which is closer to where a real floppy
+      // ear actually hangs from — keeps it clear of the muzzle instead.
+      const nearPullback = profile && !far ? 0.24 : 0
+      const ex = hx + s * hrx * (0.80 - nearPullback)
       const ey = hy - hry * 0.34 + flat * hry * 0.26
-      const drop = hry * (1.30 + a.furLength * 0.40)
-      out.push(layer(outer, ellipse(ex + s * hrx * 0.10, ey + drop * 0.42,
-        hrx * 0.25, drop * 0.52, s * 0.16, false)))
+      const drop = hry * (1.30 + a.furLength * 0.40) * earScale
+      out.push(layer(outer, ellipse(ex + s * hrx * 0.10 + setX, ey + drop * 0.42 + setY,
+        hrx * 0.25 * earScale, drop * 0.52, s * 0.16, false)))
       // Only a sliver of the inner ear shows on a hanging ear.
-      out.push(layer(inner, ellipse(ex - s * hrx * 0.02, ey + drop * 0.22,
-        hrx * 0.09, drop * 0.20, s * 0.16, false)))
+      out.push(layer(inner, ellipse(ex - s * hrx * 0.02 + setX, ey + drop * 0.22 + setY,
+        hrx * 0.09 * earScale, drop * 0.20, s * 0.16, false)))
       continue
     }
 
     const outerX = hx + s * hrx * 1.04
     const outerY = hy - hry * 0.14
-    const heightScale = a.earStyle === EarStyle.folded ? 0.62 : 1.0
+    const heightScale = (a.earStyle === EarStyle.folded ? 0.62 : 1.0) * earScale
     let tipX = lerp(hx + s * hrx * 0.94, hx + s * hrx * 1.34, flat)
     let tipY = lerp(hy - hry * 1.66 * heightScale, hy - hry * 0.5, flat)
     if (a.earStyle === EarStyle.folded) {
@@ -161,27 +179,34 @@ function ears (hx, hy, hrx, hry, p, a) {
     const innerX = hx + s * hrx * 0.14
     const innerY = hy - hry * 0.9 * heightScale
 
+    // Shrinks every point toward the base attachment, then slides the whole
+    // ear back and down — folding it partway behind the skull rather than
+    // mirroring it in place at full size.
+    const shrink = (px, py) => pt(lerp(outerX, px, earScale) + setX, lerp(outerY, py, earScale) + setY)
+    const tipPt = shrink(tipX, tipY)
+    const innerPt = shrink(innerX, innerY)
+
     let pts
     const notched = a.earNotch > 0 && isLeft === a.earNotchOnLeft
     if (notched) {
       pts = [
-        pt(outerX, outerY),
-        pt(lerp(outerX, tipX, 0.68), lerp(outerY, tipY, 0.68)),
-        pt(lerp(outerX, tipX, 0.76) - s * 1.7, lerp(outerY, tipY, 0.76) + 1.5 * a.earNotch),
-        pt(tipX, tipY),
-        pt(innerX, innerY),
+        shrink(outerX, outerY),
+        shrink(lerp(outerX, tipX, 0.68), lerp(outerY, tipY, 0.68)),
+        shrink(lerp(outerX, tipX, 0.76) - s * 1.7, lerp(outerY, tipY, 0.76) + 1.5 * a.earNotch),
+        tipPt,
+        innerPt,
       ]
     } else if (a.earStyle === EarStyle.rounded) {
       // Extra points across the tip so it reads soft, not sharp.
       pts = [
-        pt(outerX, outerY),
-        pt(lerp(outerX, tipX, 0.72) + s * 0.6, lerp(outerY, tipY, 0.72)),
-        pt(lerp(tipX, innerX, 0.22), tipY + hry * 0.06),
-        pt(lerp(tipX, innerX, 0.62), lerp(tipY, innerY, 0.28)),
-        pt(innerX, innerY),
+        shrink(outerX, outerY),
+        shrink(lerp(outerX, tipX, 0.72) + s * 0.6, lerp(outerY, tipY, 0.72)),
+        shrink(lerp(tipX, innerX, 0.22), tipY + hry * 0.06),
+        shrink(lerp(tipX, innerX, 0.62), lerp(tipY, innerY, 0.28)),
+        innerPt,
       ]
     } else {
-      pts = [pt(outerX, outerY), pt(tipX, tipY), pt(innerX, innerY)]
+      pts = [shrink(outerX, outerY), tipPt, innerPt]
     }
 
     out.push(layer(outer, polygon(pts)))
@@ -191,8 +216,8 @@ function ears (hx, hy, hrx, hry, p, a) {
     const innerPts = pts.map(q => pt(lerp(cx, q.x, 0.5), lerp(cy, q.y, 0.54)))
     out.push(layer(inner, polygon(innerPts)))
     // A tuft of fur at the front edge of the canal.
-    out.push(layer(outer, capsule(lerp(cx, innerX, 0.55), lerp(cy, innerY, 0.55),
-      lerp(cx, tipX, 0.4), lerp(cy, tipY, 0.4), 0.75)))
+    out.push(layer(outer, capsule(lerp(cx, innerPt.x, 0.55), lerp(cy, innerPt.y, 0.55),
+      lerp(cx, tipPt.x, 0.4), lerp(cy, tipPt.y, 0.4), 0.75)))
   }
   return out
 }
@@ -215,12 +240,19 @@ function face (hx, hy, hrx, hry, p, a, profile) {
       hrx * (0.20 + snout * 0.16), hry * (0.26 + snout * 0.34))))
   }
 
+  // In profile the caller (sideView/sideViewDog) pushes a muzzle bulge forward,
+  // out past the head silhouette — the whole point of a profile snout. The
+  // pads, nose and mouth have to move with it, or they sit where a front-on
+  // face puts them: dead centre on the head, behind the muzzle they're
+  // supposed to sit on.
+  const faceX = profile ? hx + hrx * (0.46 + snout * 0.22) : hx
+
   // Two whisker pads and a chin, not one blob. This is most of what makes a face
   // read as an animal rather than a shape.
   const padSpread = 0.23 - snout * 0.05
-  out.push(layer(Part.muzzle, ellipse(hx - hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
-  out.push(layer(Part.muzzle, ellipse(hx + hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
-  out.push(layer(Part.muzzle, ellipse(hx, muzzleY + hry * (0.20 + snout * 0.12),
+  out.push(layer(Part.muzzle, ellipse(faceX - hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
+  out.push(layer(Part.muzzle, ellipse(faceX + hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
+  out.push(layer(Part.muzzle, ellipse(faceX, muzzleY + hry * (0.20 + snout * 0.12),
     hrx * (0.26 + snout * 0.06), hry * (0.19 + snout * 0.09))))
 
   // Both eyes must land on the same subpixel phase, or one renders open and the
@@ -268,14 +300,14 @@ function face (hx, hy, hrx, hry, p, a, profile) {
   const noseY = muzzleY - hry * 0.26
   const nw = hrx * (0.15 + snout * 0.05)
   out.push(layer(Part.nose, polygon([
-    pt(hx - nw, noseY - nw * 0.75),
-    pt(hx + nw, noseY - nw * 0.75),
-    pt(hx, noseY + nw * 0.95),
+    pt(faceX - nw, noseY - nw * 0.75),
+    pt(faceX + nw, noseY - nw * 0.75),
+    pt(faceX, noseY + nw * 0.95),
   ])))
-  out.push(layer(Part.mouthLine, capsule(hx, noseY + nw, hx, muzzleY + hry * 0.06, 0.4)))
+  out.push(layer(Part.mouthLine, capsule(faceX, noseY + nw, faceX, muzzleY + hry * 0.06, 0.4)))
 
   if (p.mouthOpen > 0.15) {
-    out.push(layer(Part.mouth, ellipse(hx, muzzleY + hry * 0.22, hrx * 0.115,
+    out.push(layer(Part.mouth, ellipse(faceX, muzzleY + hry * 0.22, hrx * 0.115,
       hry * 0.075 * p.mouthOpen * 3)))
   }
   return out
@@ -389,11 +421,15 @@ function sideView (p, a) {
 
   L.push(...collarLayers(hx - hrx * 0.5, hy + hry * 1.15, 4.2, a, 1.15))
   L.push(layer(Part.head, ellipse(hx, hy, hrx, hry, p.headTilt)))
-  L.push(...ears(hx, hy, hrx, hry, p, a))
   // The muzzle pushes forward in profile, further for a long snout.
   L.push(layer(Part.muzzle, ellipse(hx + hrx * (0.62 + a.snout * 0.22), hy + hry * 0.36,
     hrx * (0.4 + a.snout * 0.16), hry * 0.35, 0, true)))
   L.push(...face(hx, hy, hrx, hry, p, a, true))
+  // After the muzzle, not before: a pointed ear sits above it with no overlap
+  // either way, but a floppy ear's near-side attachment lands almost exactly
+  // where the muzzle bulge pushes forward to, and drawn first it vanished
+  // underneath. Order settles what position tuning alone could not.
+  L.push(...ears(hx, hy, hrx, hry, p, a, true))
 
   return { layers: L, meta: { headX: hx, headY: hy, headRX: hrx, headRY: hry, profile: true, view: 'side', grid: 64 } }
 }
@@ -574,11 +610,14 @@ function sideViewDog (p, a) {
 
   L.push(...collarLayers(hx - hrx * 0.62, hy + hry * 1.05, 4.0, a, 1.05))
   L.push(layer(Part.head, ellipse(hx, hy, hrx, hry, p.headTilt)))
-  L.push(...ears(hx, hy, hrx, hry, p, a))
   // A dog's muzzle is long and squared off, and it carries most of the profile.
   L.push(layer(Part.muzzle, ellipse(hx + hrx * (0.62 + a.snout * 0.30), hy + hry * 0.30,
     hrx * (0.40 + a.snout * 0.24), hry * 0.31, 0, true)))
   L.push(...face(hx, hy, hrx, hry, p, a, true))
+  // After the muzzle: a floppy ear's near-side attachment lands almost exactly
+  // where the muzzle bulge pushes forward to, and drawn first it vanished
+  // underneath it entirely. See sideView for the cat equivalent.
+  L.push(...ears(hx, hy, hrx, hry, p, a, true))
 
   return { layers: L, meta: { headX: hx, headY: hy, headRX: hrx, headRY: hry, profile: true, view: 'side', grid: 64 } }
 }

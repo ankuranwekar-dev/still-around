@@ -14,10 +14,12 @@ const ctx = canvas.getContext('2d')
 // Where the pets' feet sit, as a fraction of window height. hitPet below has
 // to agree with this, since it is doing the same geometry in reverse.
 const FLOOR = 0.97
-const SCALE = 0.7
 
 let pets = []
-let settings = { scale: 0.14, speech: true }
+// scale is pet height as a fraction of window height — the tray's Size menu
+// changes it; store.js's DEFAULTS.settings.scale is the fallback before the
+// first pets:set arrives.
+let settings = { scale: 0.175, speech: true }
 let interactive = false
 let focused = true
 let batterySaving = false
@@ -62,7 +64,7 @@ function frame (now) {
     const dt = Math.min(0.05, (now - last) / 1000)
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
     for (const pet of pets) {
-      pet.stage.draw(ctx, { width: window.innerWidth, height: window.innerHeight, floor: FLOOR, scale: SCALE }, dt)
+      pet.stage.draw(ctx, { width: window.innerWidth, height: window.innerHeight, floor: FLOOR, scale: settings.scale }, dt)
     }
   }
   last = now
@@ -74,7 +76,7 @@ function hitPet (x, y) {
   const height = window.innerHeight
   const width = window.innerWidth
   for (const p of pets) {
-    const petHeight = height * SCALE * (p.stage.appearance.size || 1)
+    const petHeight = height * settings.scale * (p.stage.appearance.size || 1)
     const px = p.stage.position * width
     const feet = height * FLOOR
     if (x >= px - petHeight / 2 && x <= px + petHeight / 2 &&

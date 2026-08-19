@@ -43,6 +43,15 @@ function trayIcon () {
   return image
 }
 
+// Named steps rather than a slider — a native tray menu has no slider, and
+// four sizes are plenty of choice for something people set once and forget.
+const SIZES = [
+  { label: 'Small', value: 0.12 },
+  { label: 'Default', value: 0.175 },
+  { label: 'Large', value: 0.25 },
+  { label: 'Extra large', value: 0.35 },
+]
+
 export function createTray (h) {
   handlers = h
   tray = new Tray(trayIcon())
@@ -71,6 +80,13 @@ export function refreshTray () {
       }))
     : [{ label: 'No pets yet', enabled: false }]
 
+  // The saved value might not land on a step exactly — an old file, or one
+  // dragged partway there before this menu existed — so pick the nearest
+  // rather than requiring an exact match to show anything checked.
+  const currentScale = state.settings?.scale ?? 0.175
+  const closestSize = SIZES.reduce((best, s) =>
+    Math.abs(s.value - currentScale) < Math.abs(best.value - currentScale) ? s : best, SIZES[0])
+
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Still Around', enabled: false },
     { type: 'separator' },
@@ -84,6 +100,15 @@ export function refreshTray () {
       type: 'checkbox',
       checked: state.visible !== false,
       click: item => handlers.onToggleVisible(item.checked),
+    },
+    {
+      label: 'Size',
+      submenu: SIZES.map(s => ({
+        label: s.label,
+        type: 'radio',
+        checked: s.value === closestSize.value,
+        click: () => handlers.onSetScale(s.value),
+      })),
     },
     {
       label: 'Open at login',

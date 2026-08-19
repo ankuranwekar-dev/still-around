@@ -19,7 +19,7 @@ const DEFAULTS = {
     // battery gets uninstalled.
     activeFps: 30,
     idleFps: 8,
-    scale: 0.14,   // pet height as a fraction of screen height
+    scale: 0.175,  // pet height as a fraction of screen height; see tray.js's Size menu
     speech: true,
   },
 }

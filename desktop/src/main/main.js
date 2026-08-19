@@ -77,6 +77,12 @@ app.whenReady().then(async () => {
   createTray({
     getState: () => state,
     onToggleVisible: visible => { state.visible = visible; saveState(state); setVisible(visible) },
+    onSetScale: async scale => {
+      state.settings = { ...state.settings, scale }
+      await saveState(state)
+      pushPets()
+      refreshTray()
+    },
     onTogglePet: async (id, on) => {
       const pet = state.pets.find(p => p.id === id)
       if (pet) pet.enabled = on
