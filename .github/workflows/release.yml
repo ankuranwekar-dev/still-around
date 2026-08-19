@@ -61,6 +61,28 @@ jobs:
           # Windows. Add secrets and set CSC_LINK / CSC_KEY_PASSWORD to sign.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      # The .pet file association is what makes double-clicking a saved pet
+      # actually open the app — the whole point of the file. electron-builder
+      # writes it from `build.fileAssociations` in package.json into the NSIS
+      # script at pack time; this installs the freshly built .exe silently on
+      # the runner itself and checks the registry key actually landed, rather
+      # than trusting that step ran correctly. perMachine is false, so a
+      # per-user install registers under HKCU, not HKLM.
+      - name: Verify the installer registers .pet
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release\*.exe | Select-Object -First 1
+          Write-Host "Installing $($installer.Name) silently..."
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+
+          $assoc = Get-ItemProperty -Path 'HKCU:\Software\Classes\.pet' -ErrorAction Stop
+          $progId = $assoc.'(default)'
+          if ([string]::IsNullOrEmpty($progId)) {
+            throw "HKCU:\Software\Classes\.pet exists but has no ProgID set"
+          }
+          Write-Host "Registered .pet -> $progId"
+
       - uses: actions/upload-artifact@v4
         with:
           name: still-around-${{ matrix.artifact }}
@@ -78,8 +100,9 @@ jobs:
             release/*.exe
           draft: true
           body: |
-            Download the build for your machine below, then open the `.pet.json`
-            file you saved from the website.
+            Download the build for your machine below, then open the `.pet`
+            file you saved from the website — double-clicking it opens Still
+            Around directly.
 
             These builds are not code-signed. On macOS, right-click the app and
             choose Open the first time. On Windows, choose "More info" then
