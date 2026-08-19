@@ -17,9 +17,9 @@
     "art:meshes": "node art/scripts/build-meshes.js",
     "likeness": "node tools/test-analyzer.js",
     "web": "node tools/serve.js 8731",
-    "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --win",
-    "dist": "electron-builder --mac --win"
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist": "electron-builder --mac --win --publish never"
   },
   "devDependencies": {
     "@huggingface/transformers": "^4.2.0",
