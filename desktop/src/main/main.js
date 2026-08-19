@@ -46,6 +46,15 @@ if (process.platform === 'darwin') app.dock?.hide()
 
 let state = null
 
+// macOS delivers a double-clicked file via the `open-file` Apple Event, which
+// can arrive before `whenReady()` resolves — that's the entire point of
+// listening for it this early. But `tryImport` touches `state`, the overlay,
+// and the tray, none of which exist yet at that point. Every entry into
+// `tryImport` waits on this so the earliest possible open-file still lands
+// safely instead of throwing on a null `state`.
+let markReady
+const whenAppReady = new Promise(resolve => { markReady = resolve })
+
 /// The renderer is plain ES modules with relative imports, which `file://` will
 /// not load. A tiny custom protocol serves the app directory instead, and refuses
 /// anything outside it.
@@ -106,6 +115,8 @@ app.whenReady().then(async () => {
   // was already up (a reload, for instance).
   pushPets()
 
+  markReady()
+
   // A way to see what the overlay is actually painting without needing screen
   // recording permission: the window captures itself. Used only for verification.
   if (process.env.SA_SHOT) {
@@ -134,6 +145,7 @@ app.on('window-all-closed', () => {})
 const isPetFile = arg => arg.endsWith('.pet') || arg.endsWith('.json')
 
 async function tryImport (filePath) {
+  await whenAppReady
   try {
     state = await importPetFile(state, filePath)
     pushPets()
