@@ -28,7 +28,7 @@ pose (numbers) → shapes → region map → coat paints it → pixels
 - **`analyzer/`** — reading a real animal out of photographs. `vision.js` runs
   the models, `segment.js` is the no-model fallback, `analyze.js` is the colour
   measurement, `frames.js` pulls the sharpest frames out of a video.
-- **`web/`** — the website: the story, the studio, the downloads, the tin.
+- **`web/`** — the website: the studio, the downloads, and a live pair of cats.
 - **`desktop/`** — the Electron app, macOS and Windows.
 - **`tools/`** — offline harnesses. These are how the art was actually tuned.
 
@@ -71,6 +71,7 @@ npm run sheet                          # contact sheet of test cats and dogs
 node tools/vision-sheet.js <dir>        # photo | classical | vision | pet, side by side
 node tools/test-analyzer.js <dir>       # the same without the models, for comparison
 node tools/make-icons.js                # app icons, rendered from the engine
+node tools/web-shot.js out.png          # the website itself, full page
 ```
 
 `ONLY=beagle,lab POSES=sit,walk node tools/sheet.js out.png` narrows the sheet

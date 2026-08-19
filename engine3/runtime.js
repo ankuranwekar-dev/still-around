@@ -41,7 +41,7 @@ export async function attachLoop (THREE, canvas, stages, {
     if (!running) return
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
-    const w = opts.spread ?? Math.max(0.8, canvas.clientWidth / 700)
+    const w = spread ?? Math.max(0.8, canvas.clientWidth / 700)
     for (const s of stages) {
       s.tick(dt, { width: w })
       if (s.root.parent !== scene) scene.add(s.root)

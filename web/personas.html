@@ -3,67 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Still Around — a cat and a dog, drawn live</title>
-<meta name="description" content="Both animals are drawn frame by frame from about thirty numbers, at the resolution your screen actually asks for. No sprite sheets, no stock art.">
+<meta name="color-scheme" content="light">
+<title>Still Around — watch them</title>
+<meta name="description" content="A cat and a dog, drawn live. Click them, or ask them to sit, walk, groom or nap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='48' font-size='48'>🐈</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='50' font-size='52'>🐾</text></svg>">
 <style>
-  /* The persona cards' own styling — kept close to the approved design rather
-     than folded into style.css, since this page is the one place they're used. */
+  /* Only used on this page, so kept here rather than in style.css. */
   .persona-btn {
-    padding: 7px 15px; border-radius: 999px; border: 1px solid var(--line);
-    background: var(--paper-2); color: var(--ink-soft); font: inherit; font-size: 0.88rem;
-    font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease;
+    padding: 8px 17px; border-radius: 999px; border: 1px solid var(--line);
+    background: #fff; color: var(--ink-soft); font: inherit; font-family: var(--display);
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   }
-  .persona-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .persona-btn:hover { border-color: var(--peach); color: var(--accent-deep); transform: translateY(-2px); }
 
   .persona-stage {
-    position: relative; border-radius: 22px; overflow: hidden; aspect-ratio: 4 / 3;
-    cursor: pointer; border: 1px solid var(--line); box-shadow: var(--shadow);
-    background: radial-gradient(120% 96% at 50% 16%, var(--paper-2) 0%, var(--accent-soft) 100%);
+    position: relative; border-radius: var(--radius-lg); overflow: hidden; aspect-ratio: 4 / 3;
+    cursor: pointer; border: 1px solid var(--line); box-shadow: var(--shadow-lg);
+    background:
+      radial-gradient(75% 46% at 50% 88%, var(--peach) 0%, rgba(255, 216, 198, 0) 72%),
+      linear-gradient(180deg, #fff 0%, var(--cream) 100%);
   }
   .persona-stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   .persona-bubble {
     position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); opacity: 0;
-    pointer-events: none; background: color-mix(in srgb, var(--paper-2) 97%, transparent);
-    border: 1px solid var(--line); color: var(--ink); font-size: 0.92rem; font-weight: 600;
-    padding: 6px 14px; border-radius: 999px; white-space: nowrap; box-shadow: var(--shadow);
+    pointer-events: none; background: #fff;
+    border: 1px solid var(--line); color: var(--ink); font-size: 0.92rem; font-weight: 700;
+    padding: 7px 15px; border-radius: 999px; white-space: nowrap; box-shadow: var(--shadow);
     transition: opacity 0.2s ease;
   }
   .persona-bar {
-    position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent);
-    opacity: 0.5; transition: width 0.35s ease, opacity 0.4s ease;
+    position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--accent);
+    opacity: 0.45; transition: width 0.35s ease, opacity 0.4s ease;
   }
   .persona-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
-    gap: clamp(22px, 3vw, 34px); margin-top: clamp(30px, 4vw, 46px);
+    gap: clamp(22px, 3vw, 34px); margin-top: clamp(26px, 4vw, 40px);
   }
   .persona-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 2px 0; }
+  .persona-name { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 18px 2px 0; }
+  .persona-name h2 { font-size: 1.45rem; }
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <div class="brand">Still <span>Around</span></div>
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit"><span class="paw">🐾</span> Still <span>Around</span></a>
     <nav>
-      <a href="index.html#make">Make yours</a>
       <a href="index.html#get">Download</a>
-      <a href="personas.html">Live demo</a>
-      <a href="index.html#privacy">Privacy</a>
+      <a class="now" href="index.html#make">Make yours</a>
     </nav>
   </div>
 </header>
 
 <section class="hero" style="padding-bottom:0">
   <div class="wrap">
-    <div class="eyebrow">Personas</div>
-    <h1 style="max-width:24ch">A cat and a dog, drawn live</h1>
-    <p class="lede">
-      Both animals are drawn frame by frame from about thirty numbers, at the
-      resolution your screen actually asks for. There are no sprite sheets and no
-      stock art, so there is nothing to pixelate — and every pose is sampled
-      finely enough that the motion has no steps in it.
+    <h1 style="max-width:20ch">A cat and a dog, <em>drawn live</em>.</h1>
+    <p class="lede" style="max-width:46ch">
+      Click them. Or ask them to sit, walk, or curl up for a nap.
     </p>
 
     <div class="persona-grid">
@@ -74,14 +76,10 @@
           <div class="persona-bubble" id="cat-bubble"></div>
           <div class="persona-bar" id="cat-bar"></div>
         </div>
-        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 2px 0">
-          <h2 style="font-family:var(--serif);font-weight:600;font-size:1.42rem;line-height:1.15;margin:0">The cat</h2>
+        <div class="persona-name">
+          <h2>The cat</h2>
           <span class="small muted">ginger tabby, white chest and socks</span>
         </div>
-        <p class="small" style="margin:7px 2px 0;color:var(--ink-soft);max-width:44ch">
-          Sits and breathes, blinks, wanders off across the stage, grooms, curls
-          up. Click her and she answers.
-        </p>
         <div class="persona-controls">
           <button class="persona-btn" id="cat-sit">Sit</button>
           <button class="persona-btn" id="cat-blink">Slow blink</button>
@@ -98,14 +96,10 @@
           <div class="persona-bubble" id="dog-bubble"></div>
           <div class="persona-bar" id="dog-bar"></div>
         </div>
-        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 2px 0">
-          <h2 style="font-family:var(--serif);font-weight:600;font-size:1.42rem;line-height:1.15;margin:0">The dog</h2>
+        <div class="persona-name">
+          <h2>The dog</h2>
           <span class="small muted">tan, floppy ears, long legs</span>
         </div>
-        <p class="small" style="margin:7px 2px 0;color:var(--ink-soft);max-width:44ch">
-          Stands on a deep chest and hocked back legs, trots off, flops down to
-          sleep, asks about walks. Click him and he answers.
-        </p>
         <div class="persona-controls">
           <button class="persona-btn" id="dog-sit">Sit</button>
           <button class="persona-btn" id="dog-blink">Slow blink</button>
@@ -118,19 +112,15 @@
 
     </div>
 
-    <p class="small muted" style="margin:clamp(30px, 4vw, 42px) 2px 0;max-width:66ch">
-      Each stage renders its own library in the background: a coarse pass
-      appears first at full resolution, then the same clips are re-sampled at
-      more frames a second and swapped in. Behaviour is chosen the way it is on
-      the desktop: resting weighted heavily, movement occasionally, and
-      stillness left alone.
-    </p>
+    <div class="btn-row" style="margin-top:clamp(32px,5vw,48px);justify-content:center">
+      <a class="btn btn-primary" href="index.html#make">Make yours →</a>
+    </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <div>Still Around — for Momo &amp; Belle</div>
+    <div class="memorial">In memory of Momo &amp; Belle <span class="heart">🧡</span></div>
     <nav>
       <a href="index.html#privacy">Privacy</a>
       <a href="index.html#get">Download</a>

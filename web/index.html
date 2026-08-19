@@ -3,33 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Still Around — keep your pet on your desktop</title>
-<meta name="description" content="Upload a few photos of your cat or dog and get a small animated version of them that lives on your desktop while you work. Free, no account, and nothing you upload ever leaves your browser.">
+<meta name="color-scheme" content="light">
+<title>Still Around — your pet, on your desktop</title>
+<meta name="description" content="Add a few photos of your cat or dog and get a little animated version of them living on your desktop. Free, no sign-up, and your photos never leave your device.">
 <meta property="og:title" content="Still Around">
-<meta property="og:description" content="A small, animated version of your cat or dog, living on your desktop while you work.">
+<meta property="og:description" content="A little animated version of your cat or dog, living on your desktop.">
 <meta property="og:type" content="website">
-<script type="importmap">
-{
-  "imports": {
-    "three": "/node_modules/three/build/three.webgpu.js",
-    "three/webgpu": "/node_modules/three/build/three.webgpu.js",
-    "three/tsl": "/node_modules/three/build/three.tsl.js"
-  }
-}
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='48' font-size='48'>🐈</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='50' font-size='52'>🐾</text></svg>">
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <div class="brand">Still <span>Around</span></div>
+    <a class="brand" href="#" style="text-decoration:none;color:inherit"><span class="paw">🐾</span> Still <span>Around</span></a>
     <nav>
-      <a href="#make">Make yours</a>
       <a href="#get">Download</a>
-      <a href="#story">The story</a>
-      <a href="#privacy">Privacy</a>
+      <a href="personas.html">Watch them</a>
+      <a class="now" href="#make">Make yours</a>
     </nav>
   </div>
 </header>
@@ -38,22 +32,16 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <div class="eyebrow">Free · no account · nothing uploaded</div>
-      <h1>Your pet, still around.</h1>
+      <div class="badge"><span>🐾</span><span>Free · No sign-up · Private</span></div>
+      <h1>Your pet, <em>still around</em>.</h1>
       <p class="lede">
-        Give it a few photos of your cat or dog. It measures their colours and
-        markings and builds a small animated version of them that lives on your
-        desktop — pottering about, dozing off, occasionally asking to be fed —
-        while you get on with your day.
+        Add a few photos of your cat or dog. Get a little animated version of
+        them, pottering about on your desktop all day.
       </p>
       <div class="btn-row">
         <a class="btn btn-primary" href="#make">Make yours →</a>
-        <a class="btn btn-ghost" href="#get">Get the desktop app</a>
+        <a class="btn btn-ghost" href="#get">Get the app</a>
       </div>
-      <p class="small muted" style="margin-top:16px">
-        Every frame is drawn from about thirty numbers — no stock art, no image
-        generator. It is your animal, measured, not a lookalike.
-      </p>
     </div>
 
     <div>
@@ -70,62 +58,53 @@
   <div class="wrap">
     <div class="steps">
       <div class="step">
-        <div class="n">1</div>
-        <h3>Show it your pet</h3>
-        <p>Drop in photos, or a video — it pulls the sharpest frames out itself.
-           A vision model finds your cat or dog in each one and cuts them out,
-           running on your own machine.</p>
+        <div class="n">📸</div>
+        <h3>Add photos</h3>
+        <p>A few pictures, or one short video.</p>
       </div>
       <div class="step">
-        <div class="n">2</div>
+        <div class="n">🎨</div>
         <h3>Check the likeness</h3>
-        <p>It reads the coat colours, the white, the stripes or patches. Then you
-           nudge whatever it got wrong — you knew them, it didn't.</p>
+        <p>Nudge anything we got wrong. You knew them.</p>
       </div>
       <div class="step">
-        <div class="n">3</div>
-        <h3>Take them with you</h3>
-        <p>Keep them here in the browser, or download the desktop app for macOS
-           or Windows and they'll be on your screen all day.</p>
+        <div class="n">🖥️</div>
+        <h3>Put them on your desktop</h3>
+        <p>Mac or Windows. Yours to keep.</p>
       </div>
+    </div>
+    <div class="paws" style="margin-top:clamp(36px,6vw,64px)" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.1" ry="2.9"/><ellipse cx="14.4" cy="5.6" rx="2.1" ry="2.9"/><ellipse cx="19.4" cy="9.6" rx="2" ry="2.6"/><ellipse cx="3.6" cy="12.2" rx="2" ry="2.6"/><path d="M12 11.4c3.1 0 6 2.5 6 5.2 0 2-1.6 3.2-3.5 3.2-1 0-1.8-.4-2.5-.4s-1.5.4-2.5.4C7.6 19.8 6 18.6 6 16.6c0-2.7 2.9-5.2 6-5.2z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.1" ry="2.9"/><ellipse cx="14.4" cy="5.6" rx="2.1" ry="2.9"/><ellipse cx="19.4" cy="9.6" rx="2" ry="2.6"/><ellipse cx="3.6" cy="12.2" rx="2" ry="2.6"/><path d="M12 11.4c3.1 0 6 2.5 6 5.2 0 2-1.6 3.2-3.5 3.2-1 0-1.8-.4-2.5-.4s-1.5.4-2.5.4C7.6 19.8 6 18.6 6 16.6c0-2.7 2.9-5.2 6-5.2z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.1" ry="2.9"/><ellipse cx="14.4" cy="5.6" rx="2.1" ry="2.9"/><ellipse cx="19.4" cy="9.6" rx="2" ry="2.6"/><ellipse cx="3.6" cy="12.2" rx="2" ry="2.6"/><path d="M12 11.4c3.1 0 6 2.5 6 5.2 0 2-1.6 3.2-3.5 3.2-1 0-1.8-.4-2.5-.4s-1.5.4-2.5.4C7.6 19.8 6 18.6 6 16.6c0-2.7 2.9-5.2 6-5.2z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.1" ry="2.9"/><ellipse cx="14.4" cy="5.6" rx="2.1" ry="2.9"/><ellipse cx="19.4" cy="9.6" rx="2" ry="2.6"/><ellipse cx="3.6" cy="12.2" rx="2" ry="2.6"/><path d="M12 11.4c3.1 0 6 2.5 6 5.2 0 2-1.6 3.2-3.5 3.2-1 0-1.8-.4-2.5-.4s-1.5.4-2.5.4C7.6 19.8 6 18.6 6 16.6c0-2.7 2.9-5.2 6-5.2z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="8" cy="7" rx="2.1" ry="2.9"/><ellipse cx="14.4" cy="5.6" rx="2.1" ry="2.9"/><ellipse cx="19.4" cy="9.6" rx="2" ry="2.6"/><ellipse cx="3.6" cy="12.2" rx="2" ry="2.6"/><path d="M12 11.4c3.1 0 6 2.5 6 5.2 0 2-1.6 3.2-3.5 3.2-1 0-1.8-.4-2.5-.4s-1.5.4-2.5.4C7.6 19.8 6 18.6 6 16.6c0-2.7 2.9-5.2 6-5.2z"/></svg>
     </div>
   </div>
 </section>
 
 <!-- -------------------------------------------------------------- studio -->
-<section id="make">
+<section id="make" style="padding-top:clamp(28px,4vw,48px)">
   <div class="wrap">
     <div class="studio">
       <div class="studio-head">
         <h2>Make yours</h2>
         <div class="pill-group" role="group" aria-label="Which animal">
-          <button class="pill" id="pick-cat" aria-pressed="true">Cat</button>
-          <button class="pill" id="pick-dog" aria-pressed="false">Dog</button>
+          <button class="pill" id="pick-cat" aria-pressed="true">🐱 Cat</button>
+          <button class="pill" id="pick-dog" aria-pressed="false">🐶 Dog</button>
         </div>
       </div>
 
       <div class="studio-body">
         <!-- step 1: the shot list -->
         <div id="stage-upload">
-          <p class="muted" style="margin-top:0;max-width:52ch">
-            Four photos. Between them they show everything that makes your pet look
-            like your pet — or hand us one short video and we'll find them in it.
-          </p>
-
           <div class="video-lead" id="video-lead">
             <div class="video-lead-icon">🎬</div>
             <div>
               <h3>Easiest: one ten-second video</h3>
-              <p class="small muted">
-                Walk slowly around them once, keeping them in frame. We'll pick the
-                best moment for each angle.
-              </p>
+              <p class="small">Walk slowly around them, keeping them in frame.</p>
             </div>
             <button class="btn btn-primary" id="choose-video">Choose a video</button>
             <input type="file" id="video-input" class="hidden" accept="video/*">
           </div>
 
-          <div class="or-line"><span>or add photos yourself</span></div>
+          <div class="or-line"><span>or add four photos</span></div>
 
           <div class="slots" id="slots"></div>
 
@@ -133,15 +112,15 @@
           <p class="small muted hidden" id="progress-label"></p>
           <p class="small muted" id="vision-note" style="margin-top:10px"></p>
 
-          <div class="peek" id="peek">
+          <div class="peek hidden" id="peek">
             <div class="stage-frame" style="aspect-ratio:1/1">
               <canvas id="peek-stage"></canvas>
             </div>
-            <p class="small muted" id="peek-label">They'll appear here as you go.</p>
+            <p class="small muted" id="peek-label"></p>
           </div>
 
-          <div class="btn-row" style="margin-top:20px">
-            <button class="btn btn-primary" id="analyse" disabled>Build my pet</button>
+          <div class="btn-row" style="margin-top:22px">
+            <button class="btn btn-primary" id="analyse" disabled>Build my pet 🐾</button>
             <button class="btn btn-ghost" id="skip">Start from a blank pet</button>
           </div>
         </div>
@@ -149,9 +128,7 @@
         <!-- the "which one is their face" chooser, shown after a video -->
         <div id="face-pick" class="hidden">
           <h3 style="margin-bottom:6px">Which one is looking at you?</h3>
-          <p class="small muted">
-            Tap the one where you can see their face best. Then tap one of their eyes.
-          </p>
+          <p class="small muted">Tap the one where you can see their face best.</p>
           <div class="candidates" id="candidates"></div>
         </div>
 
@@ -167,15 +144,8 @@
               <div id="eye-picker" class="hidden" style="margin-top:18px">
                 <h3 style="margin-bottom:6px">Click one of their eyes</h3>
                 <p class="small muted">
-                  This is the one thing worth doing by hand. Measuring an iris
-                  automatically goes wrong more often than it goes right — ginger
-                  fur is more saturated than most eyes, and in photographs pets
-                  are usually squinting. One click gets it exactly right.
-                </p>
-                <p class="small muted">
-                  The bright part is what it found. Clicking also re-cuts the photo
-                  from that point, which usually rescues a difficult one — or
-                  <strong>drag a box around your pet</strong> to be explicit.
+                  Eye colour is the one thing worth doing by hand. Clicking also
+                  re-cuts the photo from that spot — or drag a box around your pet.
                 </p>
                 <div class="pickwrap" id="pickwrap"></div>
               </div>
@@ -190,14 +160,12 @@
           </div>
 
           <div class="btn-row" style="margin-top:26px">
-            <button class="btn btn-primary" id="save-pet">Save my pet file</button>
-            <a class="btn btn-ghost" href="#get">Get the desktop app</a>
+            <button class="btn btn-primary" id="save-pet">Save my pet 🐾</button>
+            <a class="btn btn-ghost" href="#get">Get the app</a>
             <button class="btn btn-ghost" id="restart">Start over</button>
           </div>
-          <p class="small muted" style="margin-top:10px">
-            The pet file is a few hundred bytes of numbers. Open it in the desktop
-            app and they show up there — that is the whole handover, no account
-            anywhere in it.
+          <p class="small muted" style="margin-top:12px">
+            Save the file, open it in the app — that is the whole handover.
           </p>
         </div>
       </div>
@@ -206,86 +174,56 @@
 </section>
 
 <!-- ------------------------------------------------------------ download -->
-<section id="get">
+<section id="get" style="padding-top:clamp(28px,4vw,48px)">
   <div class="wrap">
-    <h2 style="margin-bottom:8px">On your desktop while you work</h2>
+    <h2 style="margin-bottom:8px">Take them with you</h2>
     <p class="muted narrow" style="margin-bottom:26px">
-      The desktop app is the real thing: your pet sits on top of whatever you are
-      doing, wanders along the bottom of the screen, naps, and reacts when you
-      click them. It runs whether or not this page is open.
+      Your pet sits on top of whatever you are doing, wanders about, and naps.
     </p>
     <div class="cards">
       <div class="card">
-        <h3>🍎 macOS</h3>
-        <p>Apple silicon and Intel. Opens at login if you want it to, and lives in
-           the menu bar.</p>
-        <div class="btn-row"><a class="btn btn-primary" id="dl-mac" href="#">Download for Mac</a></div>
+        <span class="os"><svg viewBox="0 0 32 24" fill="none" aria-hidden="true"><rect x="3" y="2" width="26" height="17" rx="2.6" fill="currentColor" opacity=".18"/><rect x="3" y="2" width="26" height="17" rx="2.6" stroke="currentColor" stroke-width="1.8"/><path d="M1 21.4h30" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <h3>macOS</h3>
+        <p>Apple silicon and Intel. Lives in the menu bar.</p>
+        <div class="btn-row"><a class="btn btn-primary" id="dl-mac" href="#">Download .dmg</a></div>
         <p class="small muted" id="dl-mac-note"></p>
       </div>
       <div class="card">
-        <h3>🪟 Windows</h3>
-        <p>Windows 10 and 11. Sits in the system tray and starts with your
-           session.</p>
-        <div class="btn-row"><a class="btn btn-primary" id="dl-win" href="#">Download for Windows</a></div>
+        <span class="os"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="2.6" fill="currentColor" opacity=".18"/><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="2.6" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <h3>Windows</h3>
+        <p>Windows 10 and 11. Lives in the system tray.</p>
+        <div class="btn-row"><a class="btn btn-primary" id="dl-win" href="#">Download .exe</a></div>
         <p class="small muted" id="dl-win-note"></p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- --------------------------------------------------------------- story -->
-<section id="story">
-  <div class="wrap narrow">
-    <div class="remember">
-      <h2>Why this exists</h2>
-      <p>
-        This was built for two cats. Momo, a ginger-and-white tabby, died in 2025.
-        Belle, a calico, died in May 2026. Their person wanted them still
-        pottering about at the edge of the screen, so we made that — and then it
-        seemed unkind to keep it to ourselves.
-      </p>
-      <p>
-        So it is free, there is nothing to sign up to, and nothing about your
-        animal is collected. If it helps, that is enough. If you want to put
-        something in the tin, there is a link below, but the two of them would
-        rather you fed a cat.
-      </p>
-    </div>
-  </div>
-</section>
-
 <!-- ------------------------------------------------------------- privacy -->
 <section id="privacy" style="padding-top:0">
-  <div class="wrap narrow">
-    <h2 style="margin-bottom:14px">What happens to your photos</h2>
-    <p class="muted">
-      Nothing. There is no account, no upload, and no server that could receive
-      them — this page is a handful of static files, and the measuring happens in
-      your browser on your own machine. That includes the vision model that finds
-      your pet: about 20 MB of weights are fetched once and cached, and then the
-      model runs on your device, on your photographs, which never go anywhere.
-      Close the tab and it is all gone. The pet file you can save is only the
-      numbers: colours, how much white, how striped. Not your photographs.
-    </p>
-    <p class="muted small" id="analytics-note"></p>
-  </div>
-</section>
-
-<section id="donate" class="hidden" style="padding-top:0">
-  <div class="wrap narrow">
-    <h2 style="margin-bottom:10px">If you'd like to chip in</h2>
-    <p class="muted">Entirely optional, and it changes nothing about the app.</p>
-    <div class="btn-row"><a class="btn btn-ghost" id="donate-link" href="#" rel="noopener">Donate</a></div>
+  <div class="wrap">
+    <div class="promise">
+      <div class="lock">🔒</div>
+      <div>
+        <h2>Your photos stay on your device</h2>
+        <p>
+          No account, no upload, no server. Everything happens in this tab, on
+          your own machine — close it and it is all gone.
+        </p>
+        <p class="small" id="analytics-note"></p>
+      </div>
+    </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <div>Still Around — for Momo &amp; Belle</div>
+    <div class="memorial">In memory of Momo &amp; Belle <span class="heart">🧡</span></div>
     <nav>
+      <a href="personas.html">Watch them</a>
       <a href="#privacy">Privacy</a>
-      <a href="#get">Download</a>
       <a id="source-link" href="#">Source</a>
+      <span id="donate" class="hidden"><a id="donate-link" href="#" rel="noopener">Donate</a></span>
     </nav>
   </div>
 </footer>

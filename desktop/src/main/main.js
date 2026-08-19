@@ -32,8 +32,9 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
   app.on('second-instance', (_e, argv) => {
-    // Opening a .pet.json while it is already running should still import.
-    const file = argv.find(a => a.endsWith('.json'))
+    // Opening a .pet file while it is already running should still import.
+    // `.json` stays accepted too, for anything saved before the extension changed.
+    const file = argv.find(a => isPetFile(a))
     if (file) tryImport(file)
     else setVisible(true)
   })
@@ -76,8 +77,8 @@ app.whenReady().then(async () => {
     onImport: async () => {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Open a pet file',
-        message: 'Choose the .pet.json you saved from the website',
-        filters: [{ name: 'Pet', extensions: ['json'] }],
+        message: 'Choose the .pet file you saved from the website',
+        filters: [{ name: 'Pet', extensions: ['pet', 'json'] }],
         properties: ['openFile'],
       })
       if (!canceled && filePaths[0]) await tryImport(filePaths[0])
@@ -114,7 +115,7 @@ app.whenReady().then(async () => {
   }
 
   // A file passed on the command line, or dropped on the app icon.
-  const fileArg = process.argv.find(a => a.endsWith('.json'))
+  const fileArg = process.argv.find(a => isPetFile(a))
   if (fileArg) tryImport(fileArg)
 })
 
@@ -125,6 +126,8 @@ app.on('open-file', (event, filePath) => {
 
 // Closing the overlay is not quitting: the pets are meant to outlive any window.
 app.on('window-all-closed', () => {})
+
+const isPetFile = arg => arg.endsWith('.pet') || arg.endsWith('.json')
 
 async function tryImport (filePath) {
   try {

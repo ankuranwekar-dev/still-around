@@ -47,6 +47,12 @@ function pick (choices, random) {
   return choices[0].clip
 }
 
+function blitPixels (ctx, frame, x, y, size) {
+  const tmp = new OffscreenCanvas(frame.size, frame.size)
+  tmp.getContext('2d').putImageData(new ImageData(frame.rgba, frame.size, frame.size), 0, 0)
+  ctx.drawImage(tmp, x, y, size, size)
+}
+
 export function createStage ({ appearance, quality = 0.55, random = Math.random }) {
   let coatKey = fingerprint(appearance) + ':' + quality
   const cache = new Map()
@@ -153,6 +159,7 @@ export function createStage ({ appearance, quality = 0.55, random = Math.random 
     }
 
     const f = clip.frames[index % frameCount]
+    if (!f) return { x, clip: current.name }
     // Scaled by the pet's own size, not just the stage's. A bigger animal gets a
     // bigger sprite grid too, but that is only resolution — without this, two
     // pets of different sizes drew to identical heights and Momo came out the
@@ -175,13 +182,13 @@ export function createStage ({ appearance, quality = 0.55, random = Math.random 
     // The rig authors its floor at y = 58 of 64, so the sprite is nudged down by
     // the remaining sliver to put the feet on the ground rather than the frame.
     const drawY = py - petHeight + petHeight * (6 / 64)
+    const dx = px - petHeight / 2
     const bitmap = clip.bitmaps ? clip.bitmaps[index % frameCount] : null
-    if (bitmap) {
-      ctx.drawImage(bitmap, px - petHeight / 2, drawY, petHeight, petHeight)
-    } else {
-      const tmp = new OffscreenCanvas(f.size, f.size)
-      tmp.getContext('2d').putImageData(new ImageData(f.rgba, f.size, f.size), 0, 0)
-      ctx.drawImage(tmp, px - petHeight / 2, drawY, petHeight, petHeight)
+    try {
+      if (bitmap) ctx.drawImage(bitmap, dx, drawY, petHeight, petHeight)
+      else blitPixels(ctx, f, dx, drawY, petHeight)
+    } catch {
+      blitPixels(ctx, f, dx, drawY, petHeight)
     }
 
     if (bubble) {

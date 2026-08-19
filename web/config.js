@@ -1,5 +1,11 @@
 // Everything you need to fill in before the site goes live, in one place.
 //
+// Until `downloads.mac` and `downloads.windows` point at real files, the two
+// download buttons say "Coming soon" — which is honest, but it also means the
+// thing the site is for cannot be had. Publishing them is the one remaining
+// blocker: push a `v*` tag so .github/workflows/release.yml builds the DMG and
+// the EXE, then paste the two release URLs in below.
+//
 // None of these are secrets — the whole site is static and there is no server, so
 // there is nowhere for a secret to live and nothing that could leak. Anything a
 // visitor uploads is read inside their own browser tab and never sent anywhere.

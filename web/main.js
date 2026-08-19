@@ -12,10 +12,7 @@ import {
   EarStyle, TailStyle, patternLabels,
 } from '../engine/appearance.js'
 import { createStage } from '../engine/stage.js'
-import { createStage3 } from '../engine3/stage.js'
-import { attachLoop } from '../engine3/runtime.js'
 import { toPetFile } from '../engine3/appearance.js'
-import * as THREE from 'three/webgpu'
 import { segment, toSmall, shrinkMask } from '../analyzer/segment.js'
 import * as Vision from '../analyzer/vision.js'
 import { readFromShots } from '../analyzer/analyze.js'
@@ -47,7 +44,7 @@ function track (event) {
 
 // ---------------------------------------------------------------- downloads
 
-function wireDownload (linkId, noteId, url, label) {
+function wireDownload (linkId, noteId, url, label, name) {
   const link = $(linkId)
   const note = $(noteId)
   if (url) {
@@ -55,14 +52,16 @@ function wireDownload (linkId, noteId, url, label) {
     link.addEventListener('click', () => track(`download:${label}`))
     note.textContent = ''
   } else {
-    link.setAttribute('disabled', '')
-    link.href = SITE.downloads.source || '#'
-    link.textContent = 'Not built yet'
-    note.textContent = `The ${label} build has not been published yet. Your pet file will work with it the moment it is.`
+    // `disabled` is not a thing on an anchor, so the old version still navigated.
+    link.classList.add('is-off')
+    link.removeAttribute('href')
+    link.setAttribute('aria-disabled', 'true')
+    link.textContent = 'Coming soon'
+    note.textContent = `The ${name} app is not published yet — make your pet now and it will open the moment it is.`
   }
 }
-wireDownload('dl-mac', 'dl-mac-note', SITE.downloads.mac, 'mac')
-wireDownload('dl-win', 'dl-win-note', SITE.downloads.windows, 'windows')
+wireDownload('dl-mac', 'dl-mac-note', SITE.downloads.mac, 'mac', 'macOS')
+wireDownload('dl-win', 'dl-win-note', SITE.downloads.windows, 'windows', 'Windows')
 $('source-link').href = SITE.downloads.source || '#'
 
 if (SITE.donateUrl) {
@@ -136,7 +135,9 @@ function fitCanvas (canvas) {
 /// and pointer handling that hit-tests by horizontal distance.
 function runStage (canvas, pets, options = {}) {
   let view = fitCanvas(canvas)
-  const observer = new ResizeObserver(() => { view = fitCanvas(canvas) })
+  const observer = new ResizeObserver(() => {
+    try { view = fitCanvas(canvas) } catch (err) { console.warn('stage resize', err) }
+  })
   observer.observe(canvas)
 
   let last = performance.now()
@@ -144,11 +145,15 @@ function runStage (canvas, pets, options = {}) {
 
   function frame (now) {
     if (!running) return
-    const dt = Math.min(0.05, (now - last) / 1000)
-    last = now
-    view.ctx.clearRect(0, 0, view.width, view.height)
-    for (const pet of pets) {
-      pet.draw(view.ctx, { width: view.width, height: view.height, ...options }, dt)
+    try {
+      const dt = Math.min(0.05, (now - last) / 1000)
+      last = now
+      view.ctx.clearRect(0, 0, view.width, view.height)
+      for (const pet of pets) {
+        pet.draw(view.ctx, { width: view.width, height: view.height, ...options }, dt)
+      }
+    } catch (err) {
+      console.warn('stage frame', err)
     }
     requestAnimationFrame(frame)
   }
@@ -209,24 +214,30 @@ function runStage (canvas, pets, options = {}) {
 
 async function startHero () {
   const canvas = $('hero-stage')
-  try {
-    const momo = createStage3(THREE, { appearance: MOMO, lod: 1 })
-    const belle = createStage3(THREE, { appearance: BELLE, lod: 1 })
-    momo.position = 0.34
-    belle.position = 0.64
-    await attachLoop(THREE, canvas, [momo, belle], { spread: 1.15 })
-    $('hero-hint').textContent = 'Momo & Belle — click them, or hold to pet'
-  } catch (err) {
-    console.warn('engine3 hero failed, 2D fallback', err)
-    const momo = createStage({ appearance: MOMO, quality: 0.5 })
-    const belle = createStage({ appearance: BELLE, quality: 0.5 })
-    momo.position = 0.34
-    belle.position = 0.64
-    await Promise.all([momo.ensure(['sit', 'blink', 'walk']), belle.ensure(['sit', 'blink', 'walk'])])
-    runStage(canvas, [momo, belle], { floor: 0.9, scale: 0.52 })
-  }
+  const momo = createStage({ appearance: MOMO, quality: 0.5 })
+  const belle = createStage({ appearance: BELLE, quality: 0.5 })
+  momo.position = 0.34
+  belle.position = 0.64
+
+  // Only what the hero needs, so the pets appear in about a second rather than
+  // after the whole animation library has been drawn.
+  const first = ['sit', 'blink', 'walk', 'speak']
+  await Promise.all([momo.ensure(first), belle.ensure(first)])
+  momo.play('sit')
+  belle.play('sit')
+  runStage(canvas, [momo, belle], { floor: 0.9, scale: 0.52 })
+  $('hero-hint').textContent = 'Momo & Belle — click them'
+
+  // The rest fills in quietly behind the scenes.
+  const rest = ['lookAround', 'groom', 'loaf', 'sleep', 'stretch', 'purr', 'slowBlink', 'trot']
+  momo.ensure(rest)
+  belle.ensure(rest)
 }
-startHero()
+startHero().catch(err => {
+  console.error(err)
+  const hint = $('hero-hint')
+  if (hint) hint.textContent = 'The live preview failed to start — try a refresh.'
+})
 
 // ------------------------------------------------------------------ studio
 
@@ -293,14 +304,18 @@ function warmVision () {
   return visionReady
 }
 
+// With a 500px margin this fired at page load — the studio sits just under the
+// fold — so every visitor paid ~20 MB and a pegged core to read the hero. It now
+// waits until the studio is actually on screen, and starts immediately if anyone
+// touches it before then.
+const studioEl = document.querySelector('.studio')
 if ('IntersectionObserver' in window) {
   const io = new IntersectionObserver(entries => {
     if (entries.some(e => e.isIntersecting)) { warmVision(); io.disconnect() }
-  }, { rootMargin: '500px' })
-  io.observe(document.querySelector('.studio'))
-} else {
-  warmVision()
+  }, { threshold: 0.15 })
+  io.observe(studioEl)
 }
+studioEl.addEventListener('pointerdown', () => warmVision(), { once: true })
 
 // ---- the shot list
 //
@@ -643,6 +658,9 @@ function voteSpecies () {
 
 function refreshCapture () {
   renderSlots()
+  const any = Object.keys(state.shots).length > 0
+  // An empty stage with a caption promising a pet is just a blank box.
+  $('peek').classList.toggle('hidden', !any)
   const haveEssentials = ESSENTIAL.every(id => state.shots[id])
   $('analyse').disabled = !haveEssentials
   $('peek-label').textContent = haveEssentials
@@ -670,10 +688,14 @@ async function updatePeek () {
     state.appearance = reading.appearance
     state.lastNotes = reading.notes
     if (!peekStage) {
-      peekStage = createStage3(THREE, { appearance: reading.appearance, lod: 0 })
-      peekRunner = await attachLoop(THREE, $('peek-stage'), [peekStage], { spread: 0.9 })
+      peekStage = createStage({ appearance: reading.appearance, quality: 0.5 })
+      await peekStage.ensure(['sit', 'blink'])
+      peekStage.play('sit')
+      peekRunner = runStage($('peek-stage'), [peekStage], { floor: 0.92, scale: 0.72 })
+      peekStage.ensure(['walk', 'speak', 'lookAround', 'groom'])
     } else {
       peekStage.update({ ...reading.appearance })
+      await peekStage.ensure(['sit', 'blink'])
     }
   } finally {
     peekPending = false
@@ -838,9 +860,12 @@ async function showResult (notes) {
     buildEyePicker()
   }
 
-  state.runner?.stop?.()
-  state.stage = createStage3(THREE, { appearance: state.appearance, lod: 1 })
-  state.runner = await attachLoop(THREE, $('studio-stage'), [state.stage], { spread: 1.0 })
+  state.runner?.stop()
+  state.stage = createStage({ appearance: state.appearance, quality: 0.62 })
+  await state.stage.ensure(['sit', 'blink', 'walk', 'speak'])
+  state.stage.play('sit')
+  state.runner = runStage($('studio-stage'), [state.stage], { floor: 0.9, scale: 0.74 })
+  state.stage.ensure(['lookAround', 'groom', 'loaf', 'sleep', 'stretch', 'purr', 'slowBlink', 'trot'])
 }
 
 // ---- clicking the eye
@@ -1141,7 +1166,7 @@ function buildControls () {
   const advanced = document.createElement('details')
   advanced.className = 'advanced'
   const summary = document.createElement('summary')
-  summary.textContent = 'Markings and build'
+  summary.textContent = 'Markings & colours'
   advanced.appendChild(summary)
 
   for (const [key, name, hint] of SLIDERS) {
@@ -1173,7 +1198,7 @@ function buildControls () {
   const morphs = document.createElement('details')
   morphs.className = 'advanced'
   const morphSummary = document.createElement('summary')
-  morphSummary.textContent = 'Build, head, ears, tail'
+  morphSummary.textContent = 'Body shape'
   morphs.appendChild(morphSummary)
   a.morphs = a.morphs || {}
   for (const [key, name, hint] of MORPH_SLIDERS) {
@@ -1198,8 +1223,8 @@ function buildControls () {
     wrap.appendChild(slider)
     morphs.appendChild(wrap)
   }
-  host.appendChild(morphs)
   host.appendChild(advanced)
+  host.appendChild(morphs)
 }
 
 function field (name, make) {
@@ -1223,7 +1248,12 @@ $('save-pet').addEventListener('click', () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${(pet.name || 'pet').replace(/[^\w-]+/g, '-').toLowerCase()}.pet.json`
+  // The installer registers the bare `.pet` extension with the OS (see
+  // package.json's `fileAssociations`) so double-clicking a saved file opens the
+  // app. A `.pet.json` name defeats that silently — the OS sees `.json`, not
+  // `.pet`, and nothing happens. The content is JSON either way; only the name
+  // has to match what the installer promised.
+  a.download = `${(pet.name || 'pet').replace(/[^\w-]+/g, '-').toLowerCase()}.pet`
   document.body.appendChild(a)
   a.click()
   a.remove()
