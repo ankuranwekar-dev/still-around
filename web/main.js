@@ -241,6 +241,18 @@ startHero().catch(err => {
 
 // ------------------------------------------------------------------ studio
 
+// There is no server on the other end of these — everything runs in this tab —
+// but the tab itself is not unlimited: an enormous photo or video is exactly
+// the kind of thing that hangs it or gets it killed for memory, especially on a
+// phone. Checked on the raw file, before anything gets decoded, so a mistaken
+// pick fails in an instant instead of after the spinner has been running for a
+// while. (The video pipeline's own length limit lives in analyzer/frames.js,
+// next to the sampling loop whose cost it is actually protecting.)
+const MAX_PHOTO_BYTES = 30 * 1024 * 1024
+const MAX_VIDEO_BYTES = 300 * 1024 * 1024
+
+const formatMB = bytes => `${Math.round(bytes / (1024 * 1024))} MB`
+
 const state = {
   species: Species.cat,
   speciesLocked: false,   // true once the person picks for themselves
@@ -601,6 +613,11 @@ function pickForSlot (id) {
   input.addEventListener('change', async () => {
     const file = input.files?.[0]
     if (!file) return
+    if (file.size > MAX_PHOTO_BYTES) {
+      showProgress(1, 1, `That photo is ${formatMB(file.size)} — a bit large. Try one under ${formatMB(MAX_PHOTO_BYTES)}?`)
+      setTimeout(hideProgress, 3000)
+      return
+    }
     showProgress(0, 1, 'Looking at that one…')
     try {
       const image = await frameFromImage(file)
@@ -723,6 +740,11 @@ $('video-input').addEventListener('change', async () => {
 })
 
 async function fromVideo (file) {
+  if (file.size > MAX_VIDEO_BYTES) {
+    showProgress(1, 1, `That video is ${formatMB(file.size)} — a shorter clip works just as well. Try one under ${formatMB(MAX_VIDEO_BYTES)}?`)
+    setTimeout(hideProgress, 3400)
+    return
+  }
   showProgress(0, 1, 'Reading the video…')
   let frames = []
   try {

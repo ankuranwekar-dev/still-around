@@ -8,6 +8,16 @@
 //
 // Nothing is uploaded. The video is read through a blob URL inside the tab.
 
+// There is no server here to overload, but there is still a tab that can hang or
+// get killed for memory: the sampling loop below seeks through the video `sample`
+// times regardless of its resolution, so a big but *short* clip — a ten-second
+// walk-around shot in 4K — costs about the same as a small one. Length is what
+// actually drives the cost, and length is also the tell that the wrong file got
+// picked (a phone's whole camera roll export, not the one clip asked for). Nine
+// times the length this is built for is generous room for someone who walked
+// slowly, while still catching that.
+const MAX_DURATION_SECONDS = 90
+
 /// Sharpness by mean absolute Laplacian. A blurred frame has little
 /// high-frequency energy, and this is the cheapest reliable way to say so.
 function sharpness (image) {
@@ -44,6 +54,9 @@ export async function framesFromVideo (file, { want = 6, sample = 18, onProgress
 
     const duration = video.duration
     if (!isFinite(duration) || duration <= 0) throw new Error('That video has no readable length.')
+    if (duration > MAX_DURATION_SECONDS) {
+      throw new Error(`That's a long video — try trimming it to under ${Math.round(MAX_DURATION_SECONDS / 60)} minutes, or use photos instead.`)
+    }
 
     const width = Math.min(640, video.videoWidth || 640)
     const height = Math.max(1, Math.round(width * ((video.videoHeight || 480) / (video.videoWidth || 640))))
