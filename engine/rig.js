@@ -125,88 +125,89 @@ function tailChain (x, y, dir, p, a) {
 function ears (hx, hy, hrx, hry, p, a, profile = false) {
   const out = []
 
-  for (const isLeft of [true, false]) {
+  // Authoring assumes facing right, same as the eye in face() below: s === 1 is
+  // the near side, s === -1 the far one. A true side view shows one ear, so the
+  // far one is not drawn at all in profile — an earlier version drew it small
+  // and set back, and it still read as a second ear on the wrong side of a
+  // front-facing head rather than as depth.
+  const isLefts = profile ? [false] : [true, false]
+
+  // Front-on, the two ears sit on either side of the skull. In profile there is
+  // only one, and it belongs on the *crown* — a single ear left at its
+  // front-view position sits over the eye, on the front of the face. This slides
+  // it back so it rides the top of the head, which is where an ear actually is
+  // when you look at an animal side-on.
+  //
+  // A hanging ear needs to go further back than a standing one: it drops past
+  // the jaw rather than rising off the skull, so the same shift that puts a cat's
+  // ear neatly on the crown leaves a dog's hanging straight down the middle of
+  // its face, over the eye.
+  const crown = profile
+    ? (a.earStyle === EarStyle.floppy ? -hrx * 1.12 : -hrx * 0.62)
+    : 0
+
+  for (const isLeft of isLefts) {
     const s = isLeft ? -1 : 1
     const flat = isLeft ? p.earL : p.earR
     const outer = isLeft ? Part.earL : Part.earR
     const inner = isLeft ? Part.earInL : Part.earInR
 
-    // Authoring assumes facing right, same as the eyes in face() below: s === 1
-    // is the near side, s === -1 the far one. Drawn full size and mirrored, the
-    // far ear in profile reads as a second, identical ear stuck on the wrong
-    // side rather than the same ear seen from further round — so it shrinks and
-    // slides back and down, tucking partway behind the skull, the same
-    // treatment the far eye already gets.
-    const far = profile && s < 0
-    const earScale = far ? 0.56 : 1
-    const setX = far ? -hrx * 0.5 : 0
-    const setY = far ? hry * 0.22 : 0
-
     if (a.earStyle === EarStyle.floppy) {
       // A dog's ear hangs from the *top* of the skull and falls past the jaw.
       // Hung from the side it reads as earmuffs.
-      // Hung from just below the top of the skull and falling past the jaw.
       // Narrow: a wide ellipse here reads as earmuffs, which is what the first
       // version looked like.
-      //
-      // In profile the near ear's usual attachment sits almost exactly where
-      // the muzzle bulge gets pushed forward to (see sideViewDog), and the
-      // muzzle paints over it since it is added after the ears. Pulling the
-      // near ear back toward the eye — which is closer to where a real floppy
-      // ear actually hangs from — keeps it clear of the muzzle instead.
-      const nearPullback = profile && !far ? 0.24 : 0
-      const ex = hx + s * hrx * (0.80 - nearPullback)
+      const ex = hx + s * hrx * 0.80 + crown
       const ey = hy - hry * 0.34 + flat * hry * 0.26
-      const drop = hry * (1.30 + a.furLength * 0.40) * earScale
-      out.push(layer(outer, ellipse(ex + s * hrx * 0.10 + setX, ey + drop * 0.42 + setY,
-        hrx * 0.25 * earScale, drop * 0.52, s * 0.16, false)))
+      const drop = hry * (1.30 + a.furLength * 0.40)
+      out.push(layer(outer, ellipse(ex + s * hrx * 0.10, ey + drop * 0.42,
+        hrx * 0.25, drop * 0.52, s * 0.16, false)))
       // Only a sliver of the inner ear shows on a hanging ear.
-      out.push(layer(inner, ellipse(ex - s * hrx * 0.02 + setX, ey + drop * 0.22 + setY,
-        hrx * 0.09 * earScale, drop * 0.20, s * 0.16, false)))
+      out.push(layer(inner, ellipse(ex - s * hrx * 0.02, ey + drop * 0.22,
+        hrx * 0.09, drop * 0.20, s * 0.16, false)))
       continue
     }
 
-    const outerX = hx + s * hrx * 1.04
+    const outerX = hx + s * hrx * 1.04 + crown
     const outerY = hy - hry * 0.14
-    const heightScale = (a.earStyle === EarStyle.folded ? 0.62 : 1.0) * earScale
-    let tipX = lerp(hx + s * hrx * 0.94, hx + s * hrx * 1.34, flat)
+    const heightScale = a.earStyle === EarStyle.folded ? 0.62 : 1.0
+    let tipX = lerp(hx + s * hrx * 0.94, hx + s * hrx * 1.34, flat) + crown
     let tipY = lerp(hy - hry * 1.66 * heightScale, hy - hry * 0.5, flat)
     if (a.earStyle === EarStyle.folded) {
       // Tipped forward, so the fold reads from the front.
       tipX += s * hrx * 0.22
       tipY += hry * 0.24
     }
-    const innerX = hx + s * hrx * 0.14
+    const innerX = hx + s * hrx * 0.14 + crown
     const innerY = hy - hry * 0.9 * heightScale
 
-    // Shrinks every point toward the base attachment, then slides the whole
-    // ear back and down — folding it partway behind the skull rather than
-    // mirroring it in place at full size.
-    const shrink = (px, py) => pt(lerp(outerX, px, earScale) + setX, lerp(outerY, py, earScale) + setY)
-    const tipPt = shrink(tipX, tipY)
-    const innerPt = shrink(innerX, innerY)
+    const tipPt = pt(tipX, tipY)
+    const innerPt = pt(innerX, innerY)
 
     let pts
-    const notched = a.earNotch > 0 && isLeft === a.earNotchOnLeft
+    // In profile only one ear is drawn, so a notch authored on the other side
+    // would never show — and the notch is usually the thing its owner
+    // remembers. Show it on whichever ear is visible instead of losing it.
+    const notched = a.earNotch > 0 && (profile || isLeft === a.earNotchOnLeft)
     if (notched) {
       pts = [
-        shrink(outerX, outerY),
-        shrink(lerp(outerX, tipX, 0.68), lerp(outerY, tipY, 0.68)),
-        shrink(lerp(outerX, tipX, 0.76) - s * 1.7, lerp(outerY, tipY, 0.76) + 1.5 * a.earNotch),
+        pt(outerX, outerY),
+        pt(lerp(outerX, tipX, 0.68), lerp(outerY, tipY, 0.68)),
+        pt(lerp(outerX, tipX, 0.76) - s * 1.7, lerp(outerY, tipY, 0.76) + 1.5 * a.earNotch),
         tipPt,
         innerPt,
       ]
     } else if (a.earStyle === EarStyle.rounded) {
       // Extra points across the tip so it reads soft, not sharp.
       pts = [
-        shrink(outerX, outerY),
-        shrink(lerp(outerX, tipX, 0.72) + s * 0.6, lerp(outerY, tipY, 0.72)),
-        shrink(lerp(tipX, innerX, 0.22), tipY + hry * 0.06),
-        shrink(lerp(tipX, innerX, 0.62), lerp(tipY, innerY, 0.28)),
+        pt(outerX, outerY),
+        pt(lerp(outerX, tipX, 0.72) + s * 0.6, lerp(outerY, tipY, 0.72)),
+        pt(lerp(tipX, innerX, 0.22), tipY + hry * 0.06),
+        pt(lerp(tipX, innerX, 0.62), lerp(tipY, innerY, 0.28)),
         innerPt,
       ]
     } else {
-      pts = [shrink(outerX, outerY), tipPt, innerPt]
+      pts = [pt(outerX, outerY), tipPt, innerPt]
     }
 
     out.push(layer(outer, polygon(pts)))
@@ -250,10 +251,20 @@ function face (hx, hy, hrx, hry, p, a, profile) {
   // Two whisker pads and a chin, not one blob. This is most of what makes a face
   // read as an animal rather than a shape.
   const padSpread = 0.23 - snout * 0.05
-  out.push(layer(Part.muzzle, ellipse(faceX - hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
-  out.push(layer(Part.muzzle, ellipse(faceX + hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
-  out.push(layer(Part.muzzle, ellipse(faceX, muzzleY + hry * (0.20 + snout * 0.12),
-    hrx * (0.26 + snout * 0.06), hry * (0.19 + snout * 0.09))))
+  if (profile) {
+    // Side-on the two pads line up behind one another, so drawing them
+    // straddling a centre line just rebuilds a face-on muzzle. One pad, sitting
+    // forward, plus the chin tucked under and behind it.
+    out.push(layer(Part.muzzle, ellipse(faceX + hrx * padSpread * 0.5, muzzleY,
+      hrx * (muzzleW + 0.06), hry * 0.26, 0, true)))
+    out.push(layer(Part.muzzle, ellipse(faceX - hrx * 0.06, muzzleY + hry * (0.20 + snout * 0.12),
+      hrx * (0.24 + snout * 0.06), hry * (0.19 + snout * 0.09))))
+  } else {
+    out.push(layer(Part.muzzle, ellipse(faceX - hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
+    out.push(layer(Part.muzzle, ellipse(faceX + hrx * padSpread, muzzleY, hrx * (muzzleW + 0.03), hry * 0.25, 0, true)))
+    out.push(layer(Part.muzzle, ellipse(faceX, muzzleY + hry * (0.20 + snout * 0.12),
+      hrx * (0.26 + snout * 0.06), hry * (0.19 + snout * 0.09))))
+  }
 
   // Both eyes must land on the same subpixel phase, or one renders open and the
   // other squinting. That bug shipped once and was the first thing noticed.
@@ -261,16 +272,19 @@ function face (hx, hy, hrx, hry, p, a, profile) {
   const eyeSpan = Math.round(eyeDX * 2) / 2
   const eyeRow = Math.round(eyeY * 2) / 2
 
-  // In profile the near eye is joined by the far one, set back and smaller. A
-  // strict side view shows only one eye, which reads as the other being shut
-  // rather than as a head turned away.
-  const sides = profile ? [1, -1] : [-1, 1]
+  // One eye in profile, not two. An earlier version drew the far eye small and
+  // set back, on the theory that a single eye reads as the other being shut —
+  // but that only happened because the skull was still drawn front-on, so one
+  // eye on a symmetrical face looked like a wink. With the ear on the crown and
+  // the nose out on the snout, the head reads as turned, and a second eye is
+  // just wrong.
+  const sides = profile ? [1] : [-1, 1]
   for (const s of sides) {
-    const far = profile && s < 0
+    const far = false
     const ex = profile
-      ? eyeCentre + (far ? -eyeSpan * 0.34 : eyeSpan * 0.92)
+      ? eyeCentre + eyeSpan * 0.86
       : eyeCentre + s * eyeSpan
-    const shrink = profile ? (far ? 0.6 : 0.82) : 1.0
+    const shrink = profile ? 0.88 : 1.0
     const rx = hrx * 0.185 * shrink
     // A half-closed eye keeps most of its height and reads as lidded. Scaling
     // linearly with `open` collapses it into a dark smudge.
@@ -299,16 +313,50 @@ function face (hx, hy, hrx, hry, p, a, profile) {
 
   const noseY = muzzleY - hry * 0.26
   const nw = hrx * (0.15 + snout * 0.05)
-  out.push(layer(Part.nose, polygon([
-    pt(faceX - nw, noseY - nw * 0.75),
-    pt(faceX + nw, noseY - nw * 0.75),
-    pt(faceX, noseY + nw * 0.95),
-  ])))
-  out.push(layer(Part.mouthLine, capsule(faceX, noseY + nw, faceX, muzzleY + hry * 0.06, 0.4)))
+  if (profile) {
+    // Half a nose, out at the leading edge of the snout. Front-on it is a
+    // symmetrical triangle; from the side you see one nostril's worth — a wedge
+    // whose flat back edge is the bridge and whose point is the tip, sitting
+    // ahead of the muzzle rather than centred on it.
+    // Out at the leading edge of the snout. The cat and the dog build their
+    // muzzle bulges with different numbers (sideView vs sideViewDog), so this is
+    // fitted to land on the front of both rather than guessed: 0.46 of a head
+    // radius ahead of faceX at the cat's snout of 0.35, 0.74 at the dog's 0.75.
+    const reach = 0.20 + snout * 0.58
+    const tipX = faceX + hrx * reach
+    // A dog's nose is a good deal bigger than a cat's, which the front view's
+    // width barely reflects because face-on it is mostly hidden by the pads.
+    const pw = hrx * (0.15 + snout * 0.14)
+    // Rounded, not a polygon. Everything else in this rig is an ellipse or a
+    // capsule; a hard-edged quad in a dark nose colour read as a bolt stuck on
+    // the end of the snout, and on the dog it and the mouth line together made
+    // a shape like a wrench.
+    // Narrower than it is tall: side-on you see one side of the nose, not the
+    // full width across both nostrils that the front view shows.
+    out.push(layer(Part.nose, ellipse(tipX - pw * 0.25, noseY + pw * 0.10,
+      pw * 0.74, pw * 0.82, -0.18, true)))
+    // A short stroke tucked back under the nose. The front view's mouth line is
+    // a stub because it is seen end-on; drawn the full depth of the muzzle here
+    // it stops reading as a mouth and starts reading as a slash across the face.
+    out.push(layer(Part.mouthLine, capsule(
+      tipX - pw * 0.80, noseY + pw * 0.90,
+      tipX - pw * 1.65, noseY + pw * 1.10, 0.28)))
+    if (p.mouthOpen > 0.15) {
+      out.push(layer(Part.mouth, ellipse(faceX + hrx * 0.06, muzzleY + hry * 0.20,
+        hrx * 0.10, hry * 0.075 * p.mouthOpen * 3)))
+    }
+  } else {
+    out.push(layer(Part.nose, polygon([
+      pt(faceX - nw, noseY - nw * 0.75),
+      pt(faceX + nw, noseY - nw * 0.75),
+      pt(faceX, noseY + nw * 0.95),
+    ])))
+    out.push(layer(Part.mouthLine, capsule(faceX, noseY + nw, faceX, muzzleY + hry * 0.06, 0.4)))
 
-  if (p.mouthOpen > 0.15) {
-    out.push(layer(Part.mouth, ellipse(faceX, muzzleY + hry * 0.22, hrx * 0.115,
-      hry * 0.075 * p.mouthOpen * 3)))
+    if (p.mouthOpen > 0.15) {
+      out.push(layer(Part.mouth, ellipse(faceX, muzzleY + hry * 0.22, hrx * 0.115,
+        hry * 0.075 * p.mouthOpen * 3)))
+    }
   }
   return out
 }
