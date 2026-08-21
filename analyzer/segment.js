@@ -109,7 +109,7 @@ function clusterColours (samples, k, rounds = 6) {
 /// Keep only the largest connected run of mask pixels, then close small holes.
 /// Without this the mask picks up a cushion in one corner and a lamp in another,
 /// and the "animal" ends up being the room's warm patches.
-function largestBlob (mask, w, h) {
+export function largestBlob (mask, w, h) {
   const labels = new Int32Array(w * h)
   const stack = new Int32Array(w * h)
   let bestLabel = 0, bestCount = 0, label = 0
@@ -141,7 +141,7 @@ function largestBlob (mask, w, h) {
 /// Fill interior gaps: any hole not reachable from the frame edge is inside the
 /// animal. Dark fur often fails the colour test, and unfilled holes let the
 /// background's colour leak into the coat measurement.
-function fillHoles (mask, w, h) {
+export function fillHoles (mask, w, h) {
   const outside = new Uint8Array(w * h)
   const stack = []
   const push = i => { if (!mask[i] && !outside[i]) { outside[i] = 1; stack.push(i) } }

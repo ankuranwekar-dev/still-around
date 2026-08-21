@@ -45,7 +45,7 @@ function trayIcon () {
 
 // Named steps rather than a slider — a native tray menu has no slider, and
 // four sizes are plenty of choice for something people set once and forget.
-const SIZES = [
+export const SIZES = [
   { label: 'Small', value: 0.12 },
   { label: 'Default', value: 0.175 },
   { label: 'Large', value: 0.25 },
@@ -75,6 +75,7 @@ export function refreshTray () {
             click: item => handlers.onTogglePet(pet.id, item.checked),
           },
           { type: 'separator' },
+          { label: 'Rename…', click: () => handlers.onRename(pet.id) },
           { label: `Forget ${pet.name}`, click: () => handlers.onRemove(pet.id) },
         ],
       }))

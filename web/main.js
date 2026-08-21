@@ -884,6 +884,9 @@ async function showResult (notes) {
   }
 
   buildControls()
+  // Naming them is the one thing here only their person can do, so the cursor is
+  // already waiting in that box when they first see their pet.
+  if (!state.name) $('pet-name')?.focus()
   // The eye picker shows the face shot when there is one, because that is the only
   // photo an eye is reliably visible in.
   state.selected = state.shots.face || state.shots.front || Object.values(state.shots)[0] || null
@@ -1120,10 +1123,15 @@ function buildControls () {
   host.textContent = ''
   const a = state.appearance
 
-  host.appendChild(field('Their name', () => {
+  // Asked properly, and asked first. The placeholder used to be "Momo" — this
+  // app is *in memory of* Momo and Belle, it is not about them, and suggesting
+  // someone else's cat's name to every person who ever uses it got that backwards.
+  host.appendChild(field('What shall we call them?', () => {
     const input = document.createElement('input')
     input.type = 'text'
-    input.placeholder = state.species === Species.dog ? 'Rex' : 'Momo'
+    input.id = 'pet-name'
+    input.autocomplete = 'off'
+    input.placeholder = 'Their name'
     input.value = state.name
     input.addEventListener('input', () => { state.name = input.value })
     return input

@@ -126,6 +126,31 @@ window.addEventListener('mouseup', () => {
   holding = null
 })
 
+// Right-clicking the animal itself is how the first version of this was driven,
+// and it is the obvious gesture: the pet is the only thing on screen, so it should
+// be the thing you can talk to. The tray still has everything; this is the short way.
+window.addEventListener('contextmenu', event => {
+  const pet = hitPet(event.clientX, event.clientY)
+  if (!pet) return
+  event.preventDefault()
+  window.still.contextMenu({ id: pet.id, name: pet.name, at: event.clientX / window.innerWidth })
+})
+
+window.still.onCommand(({ id, command, at }) => {
+  const pet = pets.find(p => p.id === id)
+  if (!pet) return
+  switch (command) {
+    // Walking over is nicer than teleporting, and moveTo is already the thing
+    // that makes them walk — the drag gesture uses it too.
+    case 'come': pet.stage.moveTo(typeof at === 'number' ? at : 0.5); break
+    case 'speak': pet.stage.speak(); break
+    case 'sleep': pet.stage.play('sleep'); break
+    case 'stretch': pet.stage.play('stretch'); break
+    case 'groom': pet.stage.play('groom'); break
+    case 'sit': pet.stage.play('sit'); break
+  }
+})
+
 document.addEventListener('visibilitychange', () => { focused = document.visibilityState === 'visible' })
 window.addEventListener('blur', () => { focused = false })
 window.addEventListener('focus', () => { focused = true })

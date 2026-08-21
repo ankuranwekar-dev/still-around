@@ -10,14 +10,15 @@
 
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { app, BrowserWindow, ipcMain, protocol, net, dialog, shell } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain, protocol, net, dialog, shell } from 'electron'
 import {
   createOverlay, getOverlay, setInteractive, setVisible, send,
   holdOverlayDown, releaseOverlay,
 } from './overlay.js'
 import { showWelcome, closeWelcome, sendWelcome, getWelcome, resizeWelcome } from './welcome.js'
-import { showStudio, closeStudio } from './studio.js'
-import { createTray, refreshTray } from './tray.js'
+import { showStudio, closeStudio, getStudio } from './studio.js'
+import { createTray, refreshTray, SIZES } from './tray.js'
+import { askName } from './rename.js'
 import { loadState, saveState, importPet, importPetFile, removePet } from './store.js'
 import { setOpenAtLogin, getOpenAtLogin } from './login-item.js'
 import { SITE } from '../../../web/config.js'
@@ -46,8 +47,11 @@ if (!app.requestSingleInstanceLock()) {
   })
 }
 
-// On macOS an accessory app has no Dock icon and never takes focus.
-if (process.platform === 'darwin') app.dock?.hide()
+// The Dock icon stays. Hiding it made this an accessory app, which is tidy right
+// up until someone switches to another window: there is then no way back — no
+// Dock icon, nothing in Cmd-Tab, and the only route to the app is hunting for a
+// small paw in the menu bar. The overlay window is `focusable: false`, so the
+// pets still never steal focus; that was the part worth keeping.
 
 let state = null
 
@@ -96,6 +100,7 @@ app.whenReady().then(async () => {
       refreshTray()
     },
     onImport: openPetFile,
+    onRename: renamePet,
     onRemove: async id => {
       state = await removePet(state, id)
       pushPets()
@@ -146,6 +151,14 @@ app.whenReady().then(async () => {
   if (fileArg) tryImport(fileArg)
 })
 
+// Switching to the app — Cmd-Tab, or clicking the Dock icon — has to show
+// something, or it looks broken. The welcome window doubles as the app's home:
+// it greets a newcomer and reminds everyone else where the controls live.
+app.on('activate', () => {
+  if (getStudio()) getStudio().focus()
+  else showWelcome()
+})
+
 app.on('open-file', (event, filePath) => {
   event.preventDefault()
   tryImport(filePath)
@@ -167,6 +180,33 @@ async function withDialogsVisible (run) {
   } finally {
     releaseOverlay()
   }
+}
+
+async function setScale (scale) {
+  state.settings = { ...state.settings, scale }
+  await saveState(state)
+  pushPets()
+  refreshTray()
+}
+
+async function forgetPet (id) {
+  state = await removePet(state, id)
+  pushPets()
+  refreshTray()
+}
+
+/// Renaming happens in both menus and reaches the overlay straight away, so the
+/// speech bubble and the menus agree about who this is.
+async function renamePet (id) {
+  const pet = state.pets.find(p => p.id === id)
+  if (!pet) return
+  const name = await askName(pet.name)
+  if (!name || name === pet.name) return
+  pet.name = name
+  await saveState(state)
+  pushPets()
+  refreshTray()
+  sendWelcome('welcome:renamed', { id, name })
 }
 
 /// Asking for the file, from either the tray or the welcome window's button.
@@ -225,6 +265,41 @@ ipcMain.handle('pets:get', () => ({
 /// whether the window should be solid right now. Without this the overlay would
 /// swallow every click on the desktop behind it.
 ipcMain.on('overlay:interactive', (_e, on) => setInteractive(Boolean(on)))
+
+/// The pet's own menu. Everything here is something to do *to that animal*;
+/// anything that is really an app setting stays in the tray, so the two menus do
+/// not become two half-copies of each other.
+ipcMain.on('overlay:context-menu', (_e, info) => {
+  const overlay = getOverlay()
+  if (!overlay) return
+  const pet = state.pets.find(p => p.id === info.id)
+  if (!pet) return
+  const command = c => () => send('pet:command', { id: info.id, command: c, at: info.at })
+
+  Menu.buildFromTemplate([
+    { label: pet.name, enabled: false },
+    { type: 'separator' },
+    { label: 'Come here', click: command('come') },
+    { label: 'Say something', click: command('speak') },
+    { label: 'Have a stretch', click: command('stretch') },
+    { label: 'Have a wash', click: command('groom') },
+    { label: 'Time for a nap', click: command('sleep') },
+    { type: 'separator' },
+    { label: `Rename ${pet.name}…`, click: () => renamePet(pet.id) },
+    {
+      label: 'Size',
+      submenu: SIZES.map(size => ({
+        label: size.label,
+        type: 'radio',
+        checked: Math.abs(size.value - (state.settings?.scale ?? 0.175)) < 0.001,
+        click: () => setScale(size.value),
+      })),
+    },
+    { type: 'separator' },
+    { label: 'Hide for now', click: () => { state.visible = false; saveState(state); setVisible(false); refreshTray() } },
+    { label: `Forget ${pet.name}`, click: () => forgetPet(pet.id) },
+  ]).popup({ window: overlay })
+})
 
 ipcMain.on('overlay:log', (_e, message) => {
   if (process.env.SA_DEBUG) console.log(`[renderer] ${message}`)

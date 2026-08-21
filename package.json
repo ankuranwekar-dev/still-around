@@ -59,7 +59,6 @@
       "icon": "desktop/build/icon.icns",
       "darkModeSupport": true,
       "extendInfo": {
-        "LSUIElement": true,
         "NSHumanReadableCopyright": "Free to use. Nothing is collected."
       }
     },

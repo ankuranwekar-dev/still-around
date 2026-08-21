@@ -27,6 +27,8 @@
 // Everything still runs locally. Model weights come from a CDN once and are
 // cached by the browser; the photographs never leave the tab.
 
+import { largestBlob, fillHoles } from './segment.js'
+
 const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5'
 
 /// COCO classes we care about. Anything else in the frame is furniture.
@@ -286,7 +288,7 @@ export async function segmentWithSam (image, { box = null, point = null } = {}) 
   }
 
   const offset = bestIndex * stride
-  const mask = new Uint8Array(stride)
+  let mask = new Uint8Array(stride)
   for (let i = 0; i < stride; i++) mask[i] = plane[offset + i] ? 1 : 0
 
   // Nothing outside the detector's box is the animal. Cheap, and it is what stops
@@ -299,6 +301,18 @@ export async function segmentWithSam (image, { box = null, point = null } = {}) 
       }
     }
   }
+
+  // The same tidy-up the classical cutout has always done, which the model path
+  // never got: SAM will happily return the animal *and* a slab of sofa it liked
+  // in the corner, and leave holes through dark fur. Both end up as background
+  // inside the mask, and background inside the mask is what turns a ginger cat
+  // grey — so the model's output gets held to the same standard.
+  // Both return a new array rather than editing in place.
+  const biggest = largestBlob(mask, width, height)
+  // Only if something survived — a mask this empty is already a failure the
+  // `uncertain` flag below is about to report, and blanking it loses the
+  // evidence for that.
+  if (biggest.count > 0) mask = fillHoles(biggest.mask, width, height)
 
   // Low fill or heavy spill means the animal was small, dark, or half hidden and
   // the cutout should not be trusted silently — the studio turns this into a

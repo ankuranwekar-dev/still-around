@@ -242,20 +242,78 @@ function choosePattern (patchiness, contrast, white) {
 
 // MARK: - One photograph
 
+/// Chebyshev distance from each masked pixel to the nearest unmasked one, by two
+/// passes over the grid. Used to tell the inside of an animal from its rim.
+function edgeDistance (mask, w, h) {
+  const BIG = 1 << 15
+  const d = new Int32Array(w * h)
+  for (let i = 0; i < w * h; i++) d[i] = mask[i] ? BIG : 0
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x
+      if (!d[i]) continue
+      let best = d[i]
+      if (y > 0) best = Math.min(best, d[i - w] + 1)
+      if (x > 0) best = Math.min(best, d[i - 1] + 1)
+      if (y > 0 && x > 0) best = Math.min(best, d[i - w - 1] + 1)
+      if (y > 0 && x < w - 1) best = Math.min(best, d[i - w + 1] + 1)
+      d[i] = best
+    }
+  }
+  for (let y = h - 1; y >= 0; y--) {
+    for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x
+      if (!d[i]) continue
+      let best = d[i]
+      if (y < h - 1) best = Math.min(best, d[i + w] + 1)
+      if (x < w - 1) best = Math.min(best, d[i + 1] + 1)
+      if (y < h - 1 && x < w - 1) best = Math.min(best, d[i + w + 1] + 1)
+      if (y < h - 1 && x > 0) best = Math.min(best, d[i + w - 1] + 1)
+      d[i] = best
+    }
+  }
+  return d
+}
+
 function samplePhoto (image, mask) {
   const { width: w, height: h, data } = image
   const raw = []
   let minX = w, maxX = 0, minY = h, maxY = 0
 
+  // Whatever the segmenter gets wrong, it gets wrong at the *rim*: a skirt of
+  // sofa or wall a few pixels wide all the way round the animal. That skirt is
+  // ruinous out of proportion to its size on a mostly-white animal, because the
+  // animal's own pixels are largely desaturated and drop out of the colour vote —
+  // so a grey wall wins the coat outright and the ginger is demoted to "second
+  // colour". Measured: at 55% background in the mask a ginger-and-white cat came
+  // back grey-coated, which is exactly the bug this is here to stop.
+  //
+  // So the rim does not get a vote. Thin parts — legs, tails, ears — are all rim,
+  // which is why this backs off rather than insisting: if trimming would cost
+  // most of the animal, it trims less, and eventually not at all.
+  const area = mask.reduce((n, v) => n + (v ? 1 : 0), 0)
+  if (area < 200) return null
+  const dist = edgeDistance(mask, w, h)
+  let rim = Math.max(1, Math.round(Math.sqrt(area) * 0.055))
+  while (rim > 0) {
+    let kept = 0
+    for (let i = 0; i < dist.length; i++) if (dist[i] > rim) kept++
+    if (kept >= area * 0.35) break
+    rim = rim > 1 ? Math.floor(rim / 2) : 0
+  }
+
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x
       if (!mask[i]) continue
-      raw.push({ c: colourAt(data, i), x, y })
+      // The bounding box still comes from the whole mask: it frames where the
+      // animal is, and the regions below are fractions of that frame.
       if (x < minX) minX = x
       if (x > maxX) maxX = x
       if (y < minY) minY = y
       if (y > maxY) maxY = y
+      if (dist[i] <= rim) continue
+      raw.push({ c: colourAt(data, i), x, y })
     }
   }
   if (raw.length < 200) return null

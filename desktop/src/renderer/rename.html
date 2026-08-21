@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Name</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #2e2724; --muted: #7c716b; --ginger: #f2764b; --ginger-dark: #d95f36;
+    --line: #f0e7e2;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: #fff; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .page { height: 100%; display: flex; flex-direction: column; padding: 22px 24px 20px; }
+  h1 { font-size: 16px; margin: 0 0 14px; font-weight: 650; }
+  input {
+    font: inherit; font-size: 15px; padding: 10px 12px; width: 100%;
+    border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+    user-select: text;
+  }
+  input:focus { outline: none; border-color: var(--ginger); }
+  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: auto; }
+  button {
+    font: inherit; font-weight: 600; font-size: 13.5px; padding: 9px 18px;
+    border-radius: 999px; border: 1px solid transparent; cursor: pointer;
+  }
+  .primary { background: var(--ginger); color: #fff; }
+  .primary:hover { background: var(--ginger-dark); }
+  .ghost { background: #fff; border-color: var(--line); color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>What shall we call them?</h1>
+  <input id="name" type="text" placeholder="Their name" autocomplete="off" spellcheck="false">
+  <div class="row">
+    <button class="ghost" id="cancel">Cancel</button>
+    <button class="primary" id="save">Save</button>
+  </div>
+</div>
+<script>
+  const input = document.getElementById('name')
+  input.value = new URLSearchParams(location.search).get('name') || ''
+  input.focus()
+  input.select()
+
+  const submit = () => window.rename.submit(input.value)
+  document.getElementById('save').addEventListener('click', submit)
+  document.getElementById('cancel').addEventListener('click', () => window.rename.cancel())
+  // Return saves and Escape backs out — the two keys anyone will actually press.
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submit()
+    if (e.key === 'Escape') window.rename.cancel()
+  })
+</script>
+</body>
+</html>
