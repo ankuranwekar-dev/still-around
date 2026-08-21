@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://stillaround.app/schema/pet-v2.json",
+  "$id": "https://stillaround.online/schema/pet-v2.json",
   "title": "still-around/pet v2",
   "description": "Stub for the 3D appearance file. Version 1 is ~30 coat and build numbers. Version 2 adds morph targets and fur params (~45 numbers total). Photos are never in this file. v1 files remain valid: missing morphs default to 0 (the base mesh).",
   "type": "object",

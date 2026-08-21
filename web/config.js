@@ -8,7 +8,7 @@ export const SITE = {
   /// The site itself, once it has a domain. The desktop app's tray menu opens
   /// this for "Make one" — someone testing the app without ever having visited
   /// the site — falling back to the repository below if it is still blank.
-  siteUrl: '',
+  siteUrl: 'https://stillaround.online',
 
   /// Where the desktop builds live.
   ///
@@ -36,7 +36,7 @@ export const SITE = {
   /// Set `domain` to your site and the script tag is added automatically.
   analytics: {
     provider: 'plausible',
-    domain: '', // e.g. 'stillaround.app'
+    domain: '', // e.g. 'stillaround.online'
     src: 'https://plausible.io/js/script.js',
   },
 }

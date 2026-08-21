@@ -17,6 +17,7 @@
     "art:meshes": "node art/scripts/build-meshes.js",
     "likeness": "node tools/test-analyzer.js",
     "web": "node tools/serve.js 8731",
+    "build:site": "node tools/build-site.js",
     "dist:mac": "electron-builder --mac --publish never",
     "dist:win": "electron-builder --win --publish never",
     "dist": "electron-builder --mac --win --publish never"

@@ -1,0 +1,21 @@
+# The deploy is built by tools/build-site.js, which allowlists what it copies.
+# This list is the second lock: it keeps anything sensitive or heavy from being
+# uploaded to the builder in the first place.
+
+# Signing material. Untracked, unignored by git, and catastrophic to publish.
+*.key
+*.cer
+*.certSigningRequest
+
+node_modules
+release
+dist
+.git
+.DS_Store
+
+# Not part of the site: the desktop app, the iOS app, build tooling and notes.
+desktop
+art
+schema
+tools/out
+*.md
