@@ -11,3 +11,15 @@ test-results/
 /tmp/
 tools/out/
 .cache/
+.vercel
+
+# Code-signing material. Never belongs in a public repo even briefly — one
+# careless `git add .` here permanently leaks a private key, since it stays
+# recoverable from history even after a later removal. Keep certs and keys
+# entirely outside the working tree (this project's live outside ~/Desktop).
+*.p12
+*.key
+*.cer
+*.certSigningRequest
+CSC_LINK*.txt
+*-password.txt

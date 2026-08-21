@@ -64,7 +64,17 @@ jobs:
       # (non-Mac-App-Store) build, so nothing to add there either. Windows
       # code-signing is a separate certificate from a different CA and isn't
       # set up — the Windows build stays unsigned for now.
+      #
+      # timeout-minutes matters more here than it looks: electron-builder
+      # calls `notarytool submit --wait`, and that specific combination is a
+      # known way for the whole step to hang silently for hours with no log
+      # output at all (electron/notarize#179) — not an error, just Apple's
+      # notary service (or notarytool's polling of it) never returning. The
+      # underlying submission usually isn't actually stuck; a retry after a
+      # clean, bounded failure here is far cheaper than a human noticing and
+      # cancelling an open-ended hang, which is what happened the first time.
       - run: npm run ${{ matrix.script }}
+        timeout-minutes: 25
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
