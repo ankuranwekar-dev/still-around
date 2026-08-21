@@ -53,13 +53,24 @@ jobs:
       - run: node tools/perf3d.js --gl swiftshader --budget 50
         if: runner.os == 'macOS'
 
+      # Signing and notarization for macOS. All five are "magic" names
+      # electron-builder reads directly from the environment — nothing in
+      # package.json has to reference them. CSC_IDENTITY_AUTO_DISCOVERY is
+      # deliberately *not* set: setting it to false, even alongside a real
+      # CSC_LINK, makes electron-builder skip signing entirely (a known
+      # electron-builder bug, electron-userland/electron-builder#7515) — it
+      # cost a build finding that out. Hardened runtime and the entitlements
+      # notarization needs are already on by default for a Developer ID
+      # (non-Mac-App-Store) build, so nothing to add there either. Windows
+      # code-signing is a separate certificate from a different CA and isn't
+      # set up — the Windows build stays unsigned for now.
       - run: npm run ${{ matrix.script }}
         env:
-          # Unsigned builds. Signing needs an Apple Developer certificate and a
-          # Windows code-signing certificate; without them macOS shows a
-          # right-click-to-open warning on first launch and SmartScreen warns on
-          # Windows. Add secrets and set CSC_LINK / CSC_KEY_PASSWORD to sign.
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       # The .pet file association is what makes double-clicking a saved pet
       # actually open the app — the whole point of the file. electron-builder
@@ -104,6 +115,6 @@ jobs:
             file you saved from the website — double-clicking it opens Still
             Around directly.
 
-            These builds are not code-signed. On macOS, right-click the app and
-            choose Open the first time. On Windows, choose "More info" then
+            The macOS build is signed and notarized, so it opens normally. The
+            Windows build is not code-signed yet — choose "More info" then
             "Run anyway" if SmartScreen appears.

@@ -87,10 +87,17 @@ electron-builder cannot cross-compile a DMG or an NSIS installer, so
 `.github/workflows/release.yml` builds each on its own runner. Push a `v*` tag
 and it produces a draft release with both.
 
-The builds are **unsigned**. Signing needs an Apple Developer certificate and a
-Windows code-signing certificate; without them macOS asks for a right-click →
-Open on first launch and Windows SmartScreen shows a warning. Set `CSC_LINK` and
-`CSC_KEY_PASSWORD` as repository secrets to sign.
+**macOS is signed and notarized**; `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`,
+`APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` are repository secrets that
+electron-builder reads directly from the environment — nothing in
+`package.json` references them. One thing cost a build finding out:
+`CSC_IDENTITY_AUTO_DISCOVERY` must not be set to `false`, even alongside a real
+`CSC_LINK` — that combination makes electron-builder skip signing entirely
+(electron-userland/electron-builder#7515).
+
+**Windows is not code-signed.** That needs a certificate from a different kind
+of CA (DigiCert, Sectigo, etc.), not Apple's, and isn't set up — SmartScreen
+still warns on first run there. "More info" → "Run anyway" gets past it.
 
 ### Before it goes live
 
