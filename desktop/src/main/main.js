@@ -11,9 +11,14 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, ipcMain, protocol, net, dialog, shell } from 'electron'
-import { createOverlay, getOverlay, setInteractive, setVisible, send } from './overlay.js'
+import {
+  createOverlay, getOverlay, setInteractive, setVisible, send,
+  holdOverlayDown, releaseOverlay,
+} from './overlay.js'
+import { showWelcome, closeWelcome, sendWelcome, getWelcome, resizeWelcome } from './welcome.js'
+import { showStudio, closeStudio } from './studio.js'
 import { createTray, refreshTray } from './tray.js'
-import { loadState, saveState, importPetFile, removePet } from './store.js'
+import { loadState, saveState, importPet, importPetFile, removePet } from './store.js'
 import { setOpenAtLogin, getOpenAtLogin } from './login-item.js'
 import { SITE } from '../../../web/config.js'
 
@@ -90,15 +95,7 @@ app.whenReady().then(async () => {
       pushPets()
       refreshTray()
     },
-    onImport: async () => {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: 'Open a pet file',
-        message: 'Choose the .pet file you saved from the website',
-        filters: [{ name: 'Pet', extensions: ['pet', 'json'] }],
-        properties: ['openFile'],
-      })
-      if (!canceled && filePaths[0]) await tryImport(filePaths[0])
-    },
+    onImport: openPetFile,
     onRemove: async id => {
       state = await removePet(state, id)
       pushPets()
@@ -109,10 +106,11 @@ app.whenReady().then(async () => {
       refreshTray()
     },
     getOpenAtLogin,
-    // No domain yet — the repository page is at least a real, working link
-    // rather than one pointing nowhere. Update SITE.siteUrl in web/config.js
-    // once the site has a home and this follows automatically.
-    onMakeOne: () => shell.openExternal(SITE.siteUrl ? `${SITE.siteUrl}#make` : SITE.downloads.source),
+    // Falls back to the repository page only if the site has no domain set —
+    // SITE.siteUrl in web/config.js drives this and the welcome window alike.
+    onMakeOne: () => showStudio(),
+    onWebsite: () => shell.openExternal(SITE.siteUrl ? `${SITE.siteUrl}#make` : SITE.downloads.source),
+    onWelcome: () => showWelcome(),
     onQuit: () => app.quit(),
   })
 
@@ -122,6 +120,14 @@ app.whenReady().then(async () => {
   pushPets()
 
   markReady()
+
+  // First launch has no pets, no Dock icon and no window — without this the app
+  // looks like it did not start. Shown once; the tray keeps it reachable after.
+  if (!state.welcomed && state.pets.length === 0) {
+    state.welcomed = true
+    await saveState(state)
+    showWelcome()
+  }
 
   // A way to see what the overlay is actually painting without needing screen
   // recording permission: the window captures itself. Used only for verification.
@@ -150,6 +156,35 @@ app.on('window-all-closed', () => {})
 
 const isPetFile = arg => arg.endsWith('.pet') || arg.endsWith('.json')
 
+// The overlay sits at 'screen-saver' level so it floats above full-screen apps —
+// but that also floats it above any native dialog, which opens at the normal
+// window level and would otherwise be buried, unreachable, underneath it. Drop
+// the overlay back down for the dialog's lifetime and restore it after.
+async function withDialogsVisible (run) {
+  holdOverlayDown()
+  try {
+    return await run()
+  } finally {
+    releaseOverlay()
+  }
+}
+
+/// Asking for the file, from either the tray or the welcome window's button.
+async function openPetFile () {
+  const options = {
+    title: 'Open a pet file',
+    message: 'Choose the .pet file you saved from the website',
+    filters: [{ name: 'Pet', extensions: ['pet', 'json'] }],
+    properties: ['openFile'],
+  }
+  // Parented to the welcome window when that is what asked, so it arrives as a
+  // sheet attached to it instead of a separate window to go hunting for.
+  const parent = getWelcome()
+  const { canceled, filePaths } = await withDialogsVisible(() =>
+    parent ? dialog.showOpenDialog(parent, options) : dialog.showOpenDialog(options))
+  if (!canceled && filePaths[0]) await tryImport(filePaths[0])
+}
+
 async function tryImport (filePath) {
   await whenAppReady
   try {
@@ -159,13 +194,16 @@ async function tryImport (filePath) {
     setVisible(true)
     const pet = state.pets[state.pets.length - 1]
     send('pet:welcome', { id: pet.id, name: pet.name })
+    // If the welcome window is open it is mid-explanation; tell it the journey
+    // finished so it can show this pet instead of instructions for getting one.
+    sendWelcome('welcome:imported', { name: pet.name, appearance: pet.appearance })
   } catch (err) {
-    dialog.showMessageBox({
+    await withDialogsVisible(() => dialog.showMessageBox({
       type: 'warning',
       message: 'That file could not be read as a pet.',
       detail: `${err.message}\n\nPet files come from the "Save my pet file" button on the website.`,
       buttons: ['OK'],
-    })
+    }))
   }
 }
 
@@ -197,4 +235,56 @@ ipcMain.handle('settings:update', async (_e, patch) => {
   await saveState(state)
   pushPets()
   return state.settings
+})
+
+// ---- welcome window
+
+ipcMain.handle('welcome:state', () => ({
+  hasPets: state.pets.length > 0,
+  // Sent so the window can draw one of their own animals rather than the stock
+  // tabby, when it is opened again after there are pets to show.
+  firstPet: state.pets[0] ? { name: state.pets[0].name, appearance: state.pets[0].appearance } : null,
+}))
+
+ipcMain.on('welcome:create', () => showStudio())
+
+ipcMain.on('welcome:make-one', () => {
+  shell.openExternal(SITE.siteUrl ? `${SITE.siteUrl}#make` : SITE.downloads.source)
+})
+
+/// A pet finished in the studio window. Same landing as a file import, minus the
+/// file: validated, saved, shown, and the studio gets out of the way.
+ipcMain.on('studio:add-pet', async (_e, pet) => {
+  try {
+    state = await importPet(state, pet)
+  } catch (err) {
+    await withDialogsVisible(() => dialog.showMessageBox({
+      type: 'warning',
+      message: 'That pet could not be saved.',
+      detail: String(err.message || err),
+      buttons: ['OK'],
+    }))
+    return
+  }
+  pushPets()
+  refreshTray()
+  setVisible(true)
+  const added = state.pets[state.pets.length - 1]
+  send('pet:welcome', { id: added.id, name: added.name })
+  closeStudio()
+  // The welcome window is usually what sent them here, so it shows the finish
+  // line; if it was closed, showWelcome brings it back for the one screen that
+  // says where the app now lives.
+  showWelcome()
+  sendWelcome('welcome:imported', { name: added.name, appearance: added.appearance })
+})
+
+ipcMain.on('welcome:open-file', () => openPetFile())
+
+ipcMain.on('welcome:close', () => closeWelcome())
+
+ipcMain.on('welcome:height', (_e, height) => {
+  // Clamped: this arrives from a renderer, and an absurd value would leave the
+  // window unusable with no way back to it but deleting the saved state.
+  if (Number.isFinite(height)) resizeWelcome(Math.max(320, Math.min(1000, Math.round(height))))
 })

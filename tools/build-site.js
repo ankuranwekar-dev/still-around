@@ -36,7 +36,12 @@ const PAGE = [
   'config.js',
   'pet-worker.js',
   'og.png', // the link-preview card, referenced absolutely from index.html
+  'guide.html',
 ]
+
+// Copied whole. guide/ holds the screenshots of the real studio that the guide
+// page is built around; tools/guide-shots.js regenerates them.
+const PAGE_DIRS = ['guide']
 
 await rm(dist, { recursive: true, force: true })
 await mkdir(dist, { recursive: true })
@@ -47,6 +52,10 @@ for (const file of PAGE) {
 
 for (const tree of TREES) {
   await cp(join(root, tree), join(dist, tree), { recursive: true })
+}
+
+for (const dir of PAGE_DIRS) {
+  await cp(join(root, 'web', dir), join(dist, dir), { recursive: true })
 }
 
 // A missed import is a blank page in production and a 404 nobody reads, so fail the

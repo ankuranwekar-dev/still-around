@@ -42,7 +42,7 @@
       "engine3/**/*",
       "analyzer/**/*",
       "schema/**/*",
-      "web/config.js",
+      "web/**/*",
       "package.json",
       "!**/*.map"
     ],

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Still Around — how it works</title>
+<meta name="description" content="Two ways to get your cat or dog onto your desktop: make them in the app, or make them in your browser. Both take about a minute.">
+<meta property="og:title" content="Still Around — how it works">
+<meta property="og:description" content="Two ways to get your pet onto your desktop. Both take about a minute.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://stillaround.online/guide">
+<meta property="og:image" content="https://stillaround.online/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='50' font-size='52'>🐾</text></svg>">
+<style>
+  /* Page-local, like personas.html: nothing here is used anywhere else. */
+
+  .routes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 26px; }
+  @media (max-width: 760px) { .routes { grid-template-columns: 1fr; } }
+
+  .route {
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 22px 22px 24px; background: var(--paper);
+  }
+  .route.lead { border-color: var(--peach); background: var(--cream); }
+  .route h3 { margin: 0 0 4px; }
+  .route .who { font-size: 0.86rem; color: var(--accent-deep); font-weight: 700; margin: 0 0 12px; }
+
+  /* The numbered run of steps, shared by both routes and the walkthrough. */
+  .flow { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+  .flow li {
+    display: flex; gap: 12px; align-items: flex-start; margin-bottom: 13px;
+  }
+  .flow li:last-child { margin-bottom: 0; }
+  .flow .n {
+    flex: none; width: 25px; height: 25px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 0.78rem; font-weight: 700;
+    background: var(--blush); color: var(--accent-deep);
+  }
+  .flow p { margin: 2px 0 0; font-size: 0.94rem; line-height: 1.5; }
+  .flow b { font-weight: 700; }
+
+  /* The captured screenshots. They are photographs of the real studio, so they
+     get a frame that says "this is a picture of the thing", not a UI panel. */
+  figure { margin: 0; }
+  figure img {
+    display: block; width: 100%; height: auto;
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    background: var(--paper);
+  }
+  figcaption {
+    margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.55;
+  }
+
+  .walk { display: grid; gap: 34px; margin-top: 8px; }
+  .walk h3 { margin: 0 0 10px; }
+
+  .qa { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 12px; }
+  .qa h3 { margin: 0 0 4px; font-size: 1rem; }
+  .qa p { margin: 0 0 16px; font-size: 0.94rem; color: var(--ink-soft); line-height: 1.55; }
+  .qa p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit"><span class="paw">🐾</span> Still <span>Around</span></a>
+    <nav>
+      <a href="index.html#get">Download</a>
+      <a href="personas.html">Watch them</a>
+      <a class="now" href="index.html#make">Make yours</a>
+    </nav>
+  </div>
+</header>
+
+<section style="padding-top:clamp(28px,4vw,48px)">
+  <div class="wrap" style="max-width:900px">
+
+    <h1 style="margin-bottom:8px">How it works</h1>
+    <p class="lede" style="max-width:60ch">
+      You give it a few photos, it draws your cat or dog, and they live on your
+      desktop. About a minute, start to finish.
+    </p>
+
+    <!-- ------------------------------------------------------- two routes -->
+
+    <h2 style="margin-top:34px">Two ways in</h2>
+    <p class="small muted" style="margin-top:4px">
+      Pick either. Your photos are read on your own machine both times — nothing
+      is uploaded, and there is no account.
+    </p>
+
+    <div class="routes">
+      <div class="route lead">
+        <h3>Start with the app</h3>
+        <p class="who">Fewest steps</p>
+        <ol class="flow">
+          <li><span class="n">1</span><p>Download it for <b>Mac</b> or <b>Windows</b> and open it.</p></li>
+          <li><span class="n">2</span><p>It greets you. Click <b>Add photos</b>.</p></li>
+          <li><span class="n">3</span><p>Add the photos, check the likeness, done — they walk onto your desktop.</p></li>
+        </ol>
+        <p style="margin:18px 0 0">
+          <a class="btn btn-primary" href="index.html#get">Get the app</a>
+        </p>
+      </div>
+
+      <div class="route">
+        <h3>Start in your browser</h3>
+        <p class="who">Nothing to install first</p>
+        <ol class="flow">
+          <li><span class="n">1</span><p>Make your pet here on the site.</p></li>
+          <li><span class="n">2</span><p>Save the <b>pet file</b> it gives you.</p></li>
+          <li><span class="n">3</span><p>Download the app, and open that file in it.</p></li>
+        </ol>
+        <p style="margin:18px 0 0">
+          <a class="btn btn-ghost" href="index.html#make">Make yours here</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- -------------------------------------------------------- the middle -->
+
+    <h2 style="margin-top:46px">The part that matters: the photos</h2>
+    <p class="small muted" style="margin-top:4px;max-width:62ch">
+      Both routes ask for the same four. They exist because between them they show
+      every part of an animal the drawing needs — the first two are the important
+      ones, and one ten-second video can stand in for all four.
+    </p>
+
+    <div class="walk" style="margin-top:20px">
+      <figure>
+        <img src="guide/photos.png" alt="Four photo slots: looking at you, from the side, sitting facing you, and their tail — each showing a drawn example cat.">
+        <figcaption>
+          Drag a photo onto each one. The drawn cat in each slot is the pose to aim
+          for. You do not need all four — the first two are enough to start.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="guide/likeness.png" alt="The likeness editor: the drawn pet on the left, and controls for name, colours, coat pattern, ears and tail on the right.">
+        <figcaption>
+          Then you see them, and fix anything that came out wrong: click one of
+          their eyes to set the eye colour, then nudge the coat, the ears, the
+          tail. In the app the button here says <b>Put them on my desktop</b>; in a
+          browser it saves the pet file instead.
+        </figcaption>
+      </figure>
+    </div>
+
+    <!-- --------------------------------------------------------- questions -->
+
+    <h2 style="margin-top:46px">Two things people ask</h2>
+    <div class="qa">
+      <h3>What is a pet file?</h3>
+      <p>
+        It is your pet, as about thirty numbers — their colours, their markings,
+        their shape. No photographs are in it. It is what the browser hands to the
+        app, and it is small enough to email to someone. If you make your pet
+        inside the app, there is no file to handle at all.
+      </p>
+
+      <h3>Where did the app go after I opened it?</h3>
+      <p>
+        Into the <b>menu bar</b> on a Mac, or the system tray on Windows — the little
+        paw icon. It has no window of its own and no Dock icon, because it is only
+        ever your pet on the desktop. Click the paw to add another, resize them,
+        hide them for a while, or quit.
+      </p>
+    </div>
+
+    <p style="margin-top:34px">
+      <a class="btn btn-primary" href="index.html#make">Make yours →</a>
+      <a class="btn btn-ghost" href="index.html#get" style="margin-left:8px">Get the app</a>
+    </p>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="memorial">In memory of Momo &amp; Belle <span class="heart">🧡</span></div>
+    <nav>
+      <a href="guide.html">How it works</a>
+      <a href="personas.html">Watch them</a>
+      <a href="index.html#privacy">Privacy</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

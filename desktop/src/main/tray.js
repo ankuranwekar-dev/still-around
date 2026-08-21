@@ -78,7 +78,10 @@ export function refreshTray () {
           { label: `Forget ${pet.name}`, click: () => handlers.onRemove(pet.id) },
         ],
       }))
-    : [{ label: 'No pets yet', enabled: false }]
+    // A dead "No pets yet" line was the only thing an empty menu said, which left
+    // the one question a new person has — how do I get one — unanswered in the
+    // one place they were looking. Make it the way in instead.
+    : [{ label: 'No pets yet — start here…', click: () => handlers.onWelcome() }]
 
   // The saved value might not land on a step exactly — an old file, or one
   // dragged partway there before this menu existed — so pick the nearest
@@ -92,8 +95,9 @@ export function refreshTray () {
     { type: 'separator' },
     ...petItems,
     { type: 'separator' },
+    { label: 'Make a pet from photos…', click: () => handlers.onMakeOne() },
     { label: 'Open a pet file…', click: () => handlers.onImport() },
-    { label: 'Make one from photos…', click: () => handlers.onMakeOne() },
+    { label: 'How this works…', click: () => handlers.onWelcome() },
     { type: 'separator' },
     {
       label: 'Show on screen',

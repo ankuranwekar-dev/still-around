@@ -393,3 +393,29 @@ footer a:hover { color: var(--accent); }
   .btn, .step, .card, .slot, .candidate, .step .n, .brand .paw { transition: none; }
   .step:hover, .card:hover, .slot:hover, .candidate:hover, .btn:hover { transform: none; }
 }
+
+
+/* ---------------------------------------------------------------------------
+   Inside the desktop app.
+
+   The app opens this same page as its studio window, so everything that is
+   website rather than studio is hidden: there is no nav to browse, nothing to
+   download (they already have it), and no footer. Hidden rather than removed so
+   one page serves both and main.js is not full of null checks.
+   --------------------------------------------------------------------------- */
+
+.in-app header.top,
+.in-app .hero,
+.in-app #how,
+.in-app #get,
+.in-app #privacy,
+.in-app footer,
+/* Inside the app these two are answering questions the person no longer has:
+   they already have it, and there is no file to hand over. */
+.in-app #get-app-link,
+.in-app #handover-note { display: none; }
+
+/* The studio is the whole window now, so it should not be wearing the spacing it
+   used when it was one section of a long page. */
+.in-app #make { padding-top: 20px !important; }
+.in-app body { background: #fff; }

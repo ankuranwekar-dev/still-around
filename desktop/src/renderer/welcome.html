@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Still Around</title>
+<style>
+  /* The site's palette, but system fonts: the app is offline by design and a
+     webfont from a CDN would be the one thing in it that needs the network. */
+  :root {
+    color-scheme: light;
+    --ink: #2e2724;
+    --muted: #7c716b;
+    --ginger: #f2764b;
+    --ginger-dark: #d95f36;
+    --line: #f0e7e2;
+    --tile-1: #ffe9e0;
+    --tile-2: #fff4d9;
+    --tile-3: #ddf1ec;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #fff;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    /* Nothing here is a document; stop the whole window acting like one. */
+    user-select: none;
+    cursor: default;
+  }
+
+  /* Traffic lights sit in this strip, and it doubles as the drag handle —
+     titleBarStyle is hiddenInset, so without this the window cannot be moved. */
+  .drag {
+    height: 34px;
+    -webkit-app-region: drag;
+    flex: none;
+  }
+
+  .page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 38px 26px;
+  }
+
+  .view { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  .view.on { display: flex; }
+
+  /* ---------------------------------------------------------------- hero */
+
+  .stagewrap {
+    flex: none;
+    position: relative;
+    height: 158px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fff 0%, #fff5f0 100%);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  /* The canvas must take its size from the box, not from its width/height
+     attributes — those are the backing store, which the renderer sets from the
+     measured box and the pixel ratio. Left to themselves they laid a 440x336
+     canvas inside a 158px frame and the pet was drawn mostly off it. */
+  .stagewrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  h1 {
+    font-size: 25px;
+    line-height: 1.22;
+    letter-spacing: -0.02em;
+    margin: 20px 0 6px;
+    font-weight: 700;
+  }
+  h1 em { font-style: normal; color: var(--ginger); }
+
+  .lede {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* --------------------------------------------------------------- steps */
+
+  ol { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; }
+  li {
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+  .num {
+    flex: none;
+    width: 27px; height: 27px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    color: #6b4a3a;
+  }
+  li:nth-child(1) .num { background: var(--tile-1); }
+  li:nth-child(2) .num { background: var(--tile-2); }
+  li:nth-child(3) .num { background: var(--tile-3); }
+
+  .step-title { font-size: 14.5px; font-weight: 650; margin: 3px 0 2px; }
+  .step-body { font-size: 13px; color: var(--muted); line-height: 1.45; margin: 0; }
+
+  /* ------------------------------------------------------------- buttons */
+
+  .btn-row { display: flex; gap: 10px; margin-top: 4px; flex: none; }
+  button {
+    font: inherit;
+    font-weight: 650;
+    font-size: 14px;
+    border-radius: 999px;
+    padding: 12px 20px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .06s;
+  }
+  button:active { transform: translateY(1px); }
+  .primary { background: var(--ginger); color: #fff; flex: 1; }
+  .primary:hover { background: var(--ginger-dark); }
+  .ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  .ghost:hover { border-color: #ddd0c9; }
+
+  .foot {
+    flex: none;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .foot b { color: var(--ink); font-weight: 650; }
+  .foot a { color: var(--ginger-dark); }
+
+  /* --------------------------------------------------------------- done */
+
+  .done-mid { flex: 1; display: flex; flex-direction: column; padding-top: 22px; }
+</style>
+</head>
+<body>
+<div class="drag"></div>
+
+<div class="page">
+
+  <!-- ------------------------------------------------------ instructions -->
+  <section id="view-start" class="view on">
+    <div class="stagewrap"><canvas id="demo"></canvas></div>
+
+    <h1>Let's get your pet <em>on screen</em>.</h1>
+    <p class="lede">
+      Add a few photos and Still Around draws your cat or dog. It takes about a
+      minute, and it all happens on this Mac.
+    </p>
+
+    <ol>
+      <li>
+        <span class="num">1</span>
+        <div>
+          <p class="step-title">Add a few photos</p>
+          <p class="step-body">Four easy ones — their face, their side, sitting, and their tail. One short video works too.</p>
+        </div>
+      </li>
+      <li>
+        <span class="num">2</span>
+        <div>
+          <p class="step-title">Check the likeness</p>
+          <p class="step-body">You'll see them drawn straight away. Click their eye to get the colour right, and nudge anything else that looks off.</p>
+        </div>
+      </li>
+      <li>
+        <span class="num">3</span>
+        <div>
+          <p class="step-title">They move in</p>
+          <p class="step-body">Your pet lands on the desktop and potters about up there for as long as you like.</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="btn-row">
+      <button class="primary" id="create">Add photos →</button>
+      <button class="ghost" id="open">I have a pet file</button>
+    </div>
+
+    <p class="foot">
+      <b>Your photos never leave this Mac.</b> There is no account and no upload —
+      they are read here and forgotten. You can also
+      <a href="#" id="website">make one on the website</a> instead.
+      <br><br>
+      Still Around has no window of its own. It lives in the <b>menu bar</b> —
+      click the paw icon up there any time.
+    </p>
+  </section>
+
+  <!-- ------------------------------------------------------------- done -->
+  <section id="view-done" class="view">
+    <div class="stagewrap"><canvas id="demo-done"></canvas></div>
+    <div class="done-mid">
+      <h1 id="done-title">Say hello to <em>your pet</em>.</h1>
+      <p class="lede" id="done-body">
+        They are on your desktop now. Drag them anywhere along the floor, or give
+        them a poke.
+      </p>
+      <p class="foot" style="margin-top:0;border:0;padding-top:0">
+        To add another, change the size, or send them away for a while, click the
+        paw icon in your <b>menu bar</b>.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button class="primary" id="finish">Got it</button>
+    </div>
+  </section>
+
+</div>
+
+<script type="module" src="welcome.js"></script>
+</body>
+</html>

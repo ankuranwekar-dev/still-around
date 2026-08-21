@@ -13,6 +13,9 @@ const file = () => path.join(app.getPath('userData'), 'pets.json')
 
 const DEFAULTS = {
   visible: true,
+  // Set the first time the welcome window is shown, so it greets someone once
+  // rather than every launch. It stays reachable from the tray afterwards.
+  welcomed: false,
   pets: [],
   settings: {
     // Frame rate drops hard when nothing is happening; a desktop toy that costs
@@ -65,12 +68,19 @@ function validate (pet) {
   }
 }
 
-export async function importPetFile (state, filePath) {
-  const raw = await fs.readFile(filePath, 'utf8')
-  const pet = validate(JSON.parse(raw))
-  state.pets = [...state.pets, pet]
+/// Takes an already-parsed pet, from wherever. The studio window hands one over
+/// directly; a file is just the other way the same object arrives, so both go
+/// through the same validation rather than trusting the in-app path more.
+export async function importPet (state, pet) {
+  const validated = validate(pet)
+  state.pets = [...state.pets, validated]
   await saveState(state)
   return state
+}
+
+export async function importPetFile (state, filePath) {
+  const raw = await fs.readFile(filePath, 'utf8')
+  return importPet(state, JSON.parse(raw))
 }
 
 export async function removePet (state, id) {

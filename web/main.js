@@ -22,6 +22,14 @@ import { renderFrame } from '../engine/index.js'
 
 const $ = id => document.getElementById(id)
 
+// The desktop app ships this exact page and opens it as its studio window, so the
+// hard part — guided capture, the models, the likeness editor — has one
+// implementation rather than two that drift apart. `stillDesktop` is injected by
+// that window's preload and is undefined in an ordinary browser tab, which is the
+// only difference between the two.
+const DESKTOP = Boolean(window.stillDesktop)
+if (DESKTOP) document.documentElement.classList.add('in-app')
+
 // ---------------------------------------------------------------- analytics
 
 /// Cookieless, and only if a domain was configured. No consent banner, because
@@ -233,11 +241,13 @@ async function startHero () {
   momo.ensure(rest)
   belle.ensure(rest)
 }
-startHero().catch(err => {
-  console.error(err)
-  const hint = $('hero-hint')
-  if (hint) hint.textContent = 'The live preview failed to start — try a refresh.'
-})
+if (!DESKTOP) {
+  startHero().catch(err => {
+    console.error(err)
+    const hint = $('hero-hint')
+    if (hint) hint.textContent = 'The live preview failed to start — try a refresh.'
+  })
+}
 
 // ------------------------------------------------------------------ studio
 
@@ -1261,11 +1271,20 @@ function field (name, make) {
 
 // ---- saving the pet file
 
+if (DESKTOP) $('save-pet').textContent = 'Put them on my desktop \u{1F43E}'
+
 $('save-pet').addEventListener('click', () => {
   const pet = toPetFile(
     state.name || (state.species === Species.dog ? 'My dog' : 'My cat'),
     state.appearance,
   )
+  // In the app the file round-trip is the thing we are removing: no download, no
+  // Finder, no second step. Hand the pet to the main process and it moves in.
+  if (DESKTOP) {
+    window.stillDesktop.addPet(pet)
+    track('pet:added')
+    return
+  }
   const blob = new Blob([JSON.stringify(pet, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

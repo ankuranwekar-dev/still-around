@@ -98,6 +98,24 @@ export function createOverlay () {
 
 export function getOverlay () { return win }
 
+// The overlay floats at 'screen-saver' level so it clears full-screen apps — which
+// also puts it above every ordinary window, including this app's own dialogs and
+// the welcome window. Anything showing real UI holds the overlay down for its
+// lifetime. Counted rather than a boolean because these nest: opening the file
+// dialog *from* the welcome window would otherwise let the dialog's release pop
+// the overlay back over the still-open window behind it.
+let floatHolds = 0
+
+export function holdOverlayDown () {
+  floatHolds += 1
+  if (floatHolds === 1 && win && !win.isDestroyed()) win.setAlwaysOnTop(false)
+}
+
+export function releaseOverlay () {
+  floatHolds = Math.max(0, floatHolds - 1)
+  if (floatHolds === 0 && win && !win.isDestroyed()) win.setAlwaysOnTop(true, 'screen-saver')
+}
+
 /** Called from the renderer as the cursor crosses onto or off a pet. */
 export function setInteractive (on) {
   if (!win || win.isDestroyed() || on === interactive) return
