@@ -64,6 +64,10 @@ export function createStage ({ appearance, quality = 0.55, random = Math.random 
   let target = 0.5
   let bubble = null
   let held = false
+  // Turned off from the desktop app's settings. It lives here rather than at the
+  // call sites because the stage says things to itself — chooseNext speaks about
+  // one time in six — so a caller cannot gate it from outside.
+  let speech = true
 
   function clipKey (name, dir) { return `${coatKey}|${name}|${dir}` }
 
@@ -108,6 +112,7 @@ export function createStage ({ appearance, quality = 0.55, random = Math.random 
   }
 
   function say (text) {
+    if (!speech) return
     bubble = { text, life: 2.6 }
   }
 
@@ -267,5 +272,16 @@ export function createStage ({ appearance, quality = 0.55, random = Math.random 
       if (key !== coatKey) { coatKey = key; cache.clear(); current = null }
     },
     get appearance () { return appearance },
+    get speech () { return speech },
+    set speech (on) {
+      speech = Boolean(on)
+      if (!speech) bubble = null
+    },
+    /// Whether this animal is doing anything that needs a smooth frame rate:
+    /// walking, or holding a speech bubble. Lets the desktop overlay idle down to
+    /// a trickle when everyone has settled, which is most of the time.
+    get busy () {
+      return Boolean(bubble) || Boolean(current?.entry?.speed) || held
+    },
   }
 }

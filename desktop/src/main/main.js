@@ -19,6 +19,7 @@ import { showWelcome, closeWelcome, sendWelcome, getWelcome, resizeWelcome } fro
 import { showStudio, closeStudio, getStudio } from './studio.js'
 import { createTray, refreshTray, SIZES } from './tray.js'
 import { askName } from './rename.js'
+import { showSettings, refreshSettings } from './settings.js'
 import { loadState, saveState, importPet, importPetFile, removePet } from './store.js'
 import { setOpenAtLogin, getOpenAtLogin } from './login-item.js'
 import { SITE } from '../../../web/config.js'
@@ -86,30 +87,17 @@ app.whenReady().then(async () => {
   createTray({
     getState: () => state,
     onToggleVisible: visible => { state.visible = visible; saveState(state); setVisible(visible) },
-    onSetScale: async scale => {
-      state.settings = { ...state.settings, scale }
-      await saveState(state)
-      pushPets()
-      refreshTray()
-    },
-    onTogglePet: async (id, on) => {
-      const pet = state.pets.find(p => p.id === id)
-      if (pet) pet.enabled = on
-      await saveState(state)
-      pushPets()
-      refreshTray()
-    },
+    onSetScale: setScale,
+    onTogglePet: togglePet,
     onImport: openPetFile,
     onRename: renamePet,
-    onRemove: async id => {
-      state = await removePet(state, id)
-      pushPets()
-      refreshTray()
-    },
+    onRemove: forgetPet,
     onOpenAtLogin: async on => {
       await setOpenAtLogin(on)
       refreshTray()
+      refreshSettings(settingsPayload())
     },
+    onSettings: () => showSettings(),
     getOpenAtLogin,
     // Falls back to the repository page only if the site has no domain set —
     // SITE.siteUrl in web/config.js drives this and the welcome window alike.
@@ -182,17 +170,44 @@ async function withDialogsVisible (run) {
   }
 }
 
+/// Everything that changes state funnels through here, so the tray, the settings
+/// window and the pets themselves are never showing three different truths.
+function settingsPayload () {
+  return {
+    pets: state.pets.map(p => ({ id: p.id, name: p.name, enabled: p.enabled !== false })),
+    settings: state.settings,
+    openAtLogin: getOpenAtLogin(),
+  }
+}
+
+function broadcast () {
+  pushPets()
+  refreshTray()
+  refreshSettings(settingsPayload())
+}
+
 async function setScale (scale) {
   state.settings = { ...state.settings, scale }
   await saveState(state)
-  pushPets()
-  refreshTray()
+  broadcast()
+}
+
+async function togglePet (id, on) {
+  const pet = state.pets.find(p => p.id === id)
+  if (pet) pet.enabled = on
+  await saveState(state)
+  broadcast()
 }
 
 async function forgetPet (id) {
   state = await removePet(state, id)
-  pushPets()
-  refreshTray()
+  broadcast()
+}
+
+async function patchSettings (patch) {
+  state.settings = { ...state.settings, ...patch }
+  await saveState(state)
+  broadcast()
 }
 
 /// Renaming happens in both menus and reaches the overlay straight away, so the
@@ -204,8 +219,7 @@ async function renamePet (id) {
   if (!name || name === pet.name) return
   pet.name = name
   await saveState(state)
-  pushPets()
-  refreshTray()
+  broadcast()
   sendWelcome('welcome:renamed', { id, name })
 }
 
@@ -269,6 +283,8 @@ ipcMain.on('overlay:interactive', (_e, on) => setInteractive(Boolean(on)))
 /// The pet's own menu. Everything here is something to do *to that animal*;
 /// anything that is really an app setting stays in the tray, so the two menus do
 /// not become two half-copies of each other.
+ipcMain.on('overlay:open-settings', () => showSettings())
+
 ipcMain.on('overlay:context-menu', (_e, info) => {
   const overlay = getOverlay()
   if (!overlay) return
@@ -296,9 +312,24 @@ ipcMain.on('overlay:context-menu', (_e, info) => {
       })),
     },
     { type: 'separator' },
-    { label: 'Hide for now', click: () => { state.visible = false; saveState(state); setVisible(false); refreshTray() } },
+    { label: 'Settings…', accelerator: 'Command+,', click: () => showSettings() },
+    { label: 'Hide for now', click: () => { state.visible = false; saveState(state); setVisible(false); broadcast() } },
     { label: `Forget ${pet.name}`, click: () => forgetPet(pet.id) },
   ]).popup({ window: overlay })
+})
+
+// ---- settings window
+
+ipcMain.handle('settings:read', () => settingsPayload())
+ipcMain.on('settings:set', (_e, patch) => { patchSettings(patch) })
+ipcMain.on('settings:toggle-pet', (_e, { id, on }) => { togglePet(id, on) })
+ipcMain.on('settings:rename-pet', (_e, id) => { renamePet(id) })
+ipcMain.on('settings:forget-pet', (_e, id) => { forgetPet(id) })
+ipcMain.on('settings:add-pet', () => showStudio())
+ipcMain.on('settings:open-file', () => openPetFile())
+ipcMain.on('settings:open-at-login', async (_e, on) => {
+  await setOpenAtLogin(on)
+  broadcast()
 })
 
 ipcMain.on('overlay:log', (_e, message) => {

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Still Around Settings</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #2e2724; --muted: #7c716b; --faint: #a2958e;
+    --ginger: #f2764b; --ginger-dark: #d95f36; --ginger-soft: #fff1ea;
+    --line: #f0e7e2;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: #fff; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px; -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .drag { height: 30px; -webkit-app-region: drag; }
+  main { padding: 4px 28px 30px; overflow-y: auto; height: calc(100% - 30px); }
+
+  section { padding: 20px 0; border-bottom: 1px solid var(--line); }
+  section:last-child { border-bottom: 0; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em;
+       color: var(--faint); margin: 0 0 14px; font-weight: 700; }
+
+  .row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .row:last-child { margin-bottom: 0; }
+  .row > span.label { flex: 1; }
+  .hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 10px 0 0; }
+
+  input[type=range] { flex: 1.6; accent-color: var(--ginger); }
+  output { width: 54px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  input[type=checkbox] { accent-color: var(--ginger); width: 16px; height: 16px; }
+
+  /* pets */
+  .pet {
+    display: flex; align-items: center; gap: 11px;
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px;
+  }
+  .pet .name { flex: 1; font-weight: 600; }
+  .pet button {
+    font: inherit; font-size: 12.5px; padding: 5px 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
+  }
+  .pet button:hover { border-color: #ddd0c9; }
+  .pet button.danger:hover { border-color: var(--ginger); color: var(--ginger-dark); }
+  .empty { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .actions button {
+    font: inherit; font-weight: 600; font-size: 13.5px; padding: 9px 17px;
+    border-radius: 999px; border: 1px solid transparent; cursor: pointer;
+  }
+  .primary { background: var(--ginger); color: #fff; }
+  .primary:hover { background: var(--ginger-dark); }
+  .ghost { background: #fff; border-color: var(--line); color: var(--ink); }
+  .ghost:hover { border-color: #ddd0c9; }
+
+  .memorial {
+    font-size: 12.5px; color: var(--muted); line-height: 1.6;
+    background: var(--ginger-soft); border-radius: 12px; padding: 14px 16px;
+  }
+  .memorial b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="drag"></div>
+<main>
+
+  <section>
+    <h2>Who's here</h2>
+    <div id="pets"></div>
+    <div class="actions">
+      <button class="primary" id="add">Add a pet from photos</button>
+      <button class="ghost" id="open">Open a pet file</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>How they look</h2>
+    <label class="row">
+      <span class="label">Size</span>
+      <input type="range" id="scale" min="0.08" max="0.40" step="0.005">
+      <output id="scaleOut"></output>
+    </label>
+    <label class="row">
+      <input type="checkbox" id="speech">
+      <span class="label">Let them say things</span>
+    </label>
+    <p class="hint">Size is their height against your screen, so they stay the same next to a big monitor or a laptop.</p>
+  </section>
+
+  <section>
+    <h2>Behaviour</h2>
+    <label class="row">
+      <input type="checkbox" id="paused">
+      <span class="label">Hold still</span>
+    </label>
+    <label class="row">
+      <input type="checkbox" id="openAtLogin">
+      <span class="label">Open at login</span>
+    </label>
+    <label class="row">
+      <input type="checkbox" id="battery">
+      <span class="label">Rest when the battery is low</span>
+    </label>
+    <label class="row">
+      <span class="label">Frame rate</span>
+      <input type="range" id="activeFps" min="10" max="60" step="5">
+      <output id="activeFpsOut"></output>
+    </label>
+    <p class="hint">Drops to a trickle on its own once they have settled, whatever this is set to.</p>
+  </section>
+
+  <section>
+    <h2>About</h2>
+    <p class="memorial">
+      Still Around is free, has no account, and never sends your photos anywhere —
+      they are read on this machine and forgotten.<br><br>
+      Made in memory of <b>Momo &amp; Belle</b>, for everyone else's too.
+    </p>
+  </section>
+
+</main>
+<script type="module" src="settings.js"></script>
+</body>
+</html>

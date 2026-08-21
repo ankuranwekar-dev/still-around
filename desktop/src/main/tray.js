@@ -100,6 +100,8 @@ export function refreshTray () {
     { label: 'Open a pet file…', click: () => handlers.onImport() },
     { label: 'How this works…', click: () => handlers.onWelcome() },
     { type: 'separator' },
+    { label: 'Settings…', accelerator: 'Command+,', click: () => handlers.onSettings() },
+    { type: 'separator' },
     {
       label: 'Show on screen',
       type: 'checkbox',
@@ -114,12 +116,6 @@ export function refreshTray () {
         checked: s.value === closestSize.value,
         click: () => handlers.onSetScale(s.value),
       })),
-    },
-    {
-      label: 'Open at login',
-      type: 'checkbox',
-      checked: handlers.getOpenAtLogin(),
-      click: item => handlers.onOpenAtLogin(item.checked),
     },
     { type: 'separator' },
     { label: 'Quit', click: () => handlers.onQuit() },

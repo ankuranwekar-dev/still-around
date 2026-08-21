@@ -19,7 +19,7 @@ let pets = []
 // scale is pet height as a fraction of window height — the tray's Size menu
 // changes it; store.js's DEFAULTS.settings.scale is the fallback before the
 // first pets:set arrives.
-let settings = { scale: 0.175, speech: true }
+let settings = { scale: 0.175, speech: true, paused: false, activeFps: 30, idleFps: 8, pauseOnBatterySaver: true }
 let interactive = false
 let focused = true
 let batterySaving = false
@@ -44,6 +44,7 @@ async function load (payload) {
     return { id: pet.id, name: pet.name, stage }
   })
   // Enough of the library to appear and move; the rest fills in behind them.
+  for (const p of pets) p.stage.speech = settings.speech !== false
   await Promise.all(pets.map(p => p.stage.ensure(['sit', 'blink', 'walk', 'speak'])))
   for (const p of pets) p.stage.play('sit')
   const rest = ['lookAround', 'groom', 'loaf', 'sleep', 'stretch', 'purr', 'slowBlink', 'trot']
@@ -58,17 +59,40 @@ window.still.onWelcome(({ name }) => {
 })
 window.still.getPets().then(load)
 
+/// How smooth this moment needs to be. A desktop pet that renders 60 frames a
+/// second at a sleeping cat is a laptop that runs hot for nothing, and the first
+/// thing anyone does about that is uninstall it.
+function targetFps () {
+  if (interactive || holding) return settings.activeFps
+  if (pets.some(p => p.stage.busy)) return settings.activeFps
+  return Math.max(settings.idleFps, Math.min(15, Math.round(settings.activeFps / 2)))
+}
+
+let frameBudget = 0
+
 function frame (now) {
   if (!running) return
-  if (focused && !batterySaving) {
-    const dt = Math.min(0.05, (now - last) / 1000)
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
-    for (const pet of pets) {
-      pet.stage.draw(ctx, { width: window.innerWidth, height: window.innerHeight, floor: FLOOR, scale: settings.scale }, dt)
-    }
-  }
-  last = now
   requestAnimationFrame(frame)
+
+  const dt = Math.min(0.05, (now - last) / 1000)
+  last = now
+
+  // "Hold still" deliberately does not clear the canvas: they stay exactly where
+  // they were, mid-pose, rather than vanishing. Stopping is not the same as
+  // hiding, and hiding is already its own switch.
+  if (!focused || settings.paused) return
+  if (batterySaving && settings.pauseOnBatterySaver !== false) return
+
+  frameBudget += dt
+  const target = Math.max(1, targetFps())
+  if (frameBudget < 1 / target) return
+  const step = frameBudget
+  frameBudget = 0
+
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+  for (const pet of pets) {
+    pet.stage.draw(ctx, { width: window.innerWidth, height: window.innerHeight, floor: FLOOR, scale: settings.scale }, step)
+  }
 }
 requestAnimationFrame(frame)
 
@@ -129,6 +153,13 @@ window.addEventListener('mouseup', () => {
 // Right-clicking the animal itself is how the first version of this was driven,
 // and it is the obvious gesture: the pet is the only thing on screen, so it should
 // be the thing you can talk to. The tray still has everything; this is the short way.
+// Double-clicking the animal opens settings, exactly as the first version did.
+// It only counts on the pet: a double-click on empty desktop is not aimed at us.
+window.addEventListener('dblclick', event => {
+  if (!hitPet(event.clientX, event.clientY)) return
+  window.still.openSettings()
+})
+
 window.addEventListener('contextmenu', event => {
   const pet = hitPet(event.clientX, event.clientY)
   if (!pet) return

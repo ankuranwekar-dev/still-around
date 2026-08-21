@@ -24,6 +24,9 @@ const DEFAULTS = {
     idleFps: 8,
     scale: 0.175,  // pet height as a fraction of screen height; see tray.js's Size menu
     speech: true,
+    // "Hold still" — they stay on screen, mid-pose, but stop moving.
+    paused: false,
+    pauseOnBatterySaver: true,
   },
 }
 
