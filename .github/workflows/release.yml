@@ -53,34 +53,77 @@ jobs:
       - run: node tools/perf3d.js --gl swiftshader --budget 50
         if: runner.os == 'macOS'
 
-      # Signing and notarization for macOS. All five are "magic" names
-      # electron-builder reads directly from the environment — nothing in
-      # package.json has to reference them. CSC_IDENTITY_AUTO_DISCOVERY is
-      # deliberately *not* set: setting it to false, even alongside a real
-      # CSC_LINK, makes electron-builder skip signing entirely (a known
-      # electron-builder bug, electron-userland/electron-builder#7515) — it
-      # cost a build finding that out. Hardened runtime and the entitlements
-      # notarization needs are already on by default for a Developer ID
-      # (non-Mac-App-Store) build, so nothing to add there either. Windows
-      # code-signing is a separate certificate from a different CA and isn't
-      # set up — the Windows build stays unsigned for now.
+      # Signing only, here — notarization is a separate step below. CSC_LINK
+      # and CSC_KEY_PASSWORD are "magic" names electron-builder reads
+      # directly from the environment; nothing in package.json references
+      # them. CSC_IDENTITY_AUTO_DISCOVERY is deliberately *not* set: setting
+      # it to false, even alongside a real CSC_LINK, makes electron-builder
+      # skip signing entirely (a known electron-builder bug,
+      # electron-userland/electron-builder#7515) — it cost a build finding
+      # that out. Hardened runtime and the entitlements notarization needs
+      # are already on by default for a Developer ID (non-Mac-App-Store)
+      # build, so nothing to add there either. Windows code-signing is a
+      # separate certificate from a different CA and isn't set up — the
+      # Windows build stays unsigned for now.
       #
-      # timeout-minutes matters more here than it looks: electron-builder
-      # calls `notarytool submit --wait`, and that specific combination is a
-      # known way for the whole step to hang silently for hours with no log
-      # output at all (electron/notarize#179) — not an error, just Apple's
-      # notary service (or notarytool's polling of it) never returning. The
-      # underlying submission usually isn't actually stuck; a retry after a
-      # clean, bounded failure here is far cheaper than a human noticing and
-      # cancelling an open-ended hang, which is what happened the first time.
+      # APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID are deliberately
+      # NOT passed here. If they were, electron-builder would try to
+      # auto-notarize as part of this step by calling `notarytool submit
+      # --wait` — and that specific combination is a documented way for the
+      # whole step to hang for hours with zero log output
+      # (electron/notarize#179). Hit twice in a row on this exact build, so
+      # it is this environment's normal behaviour, not bad luck. Signing
+      # still happens here; notarizing happens by hand next, without --wait.
       - run: npm run ${{ matrix.script }}
-        timeout-minutes: 25
+        timeout-minutes: 15
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      # Submits without --wait — confirmed elsewhere to return in a couple of
+      # minutes rather than hang — and polls status in a loop this step
+      # controls, so progress is visible in the log line by line instead of
+      # one opaque blocking call. Only notarizes the DMG (the thing actually
+      # distributed); the .app inside it was already signed above.
+      - name: Notarize and staple
+        if: runner.os == 'macOS'
+        timeout-minutes: 35
+        env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -e
+          DMG=$(ls release/*.dmg | head -1)
+          echo "Submitting $DMG for notarization (not waiting on notarytool itself — that's the part that hangs)..."
+          SUBMIT_OUT=$(xcrun notarytool submit "$DMG" \
+            --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" \
+            --output-format json)
+          echo "$SUBMIT_OUT"
+          SUBMISSION_ID=$(echo "$SUBMIT_OUT" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          echo "submission id: $SUBMISSION_ID"
+
+          STATUS="In Progress"
+          for i in $(seq 1 80); do
+            sleep 20
+            INFO=$(xcrun notarytool info "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" \
+              --output-format json)
+            STATUS=$(echo "$INFO" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+            echo "check $i ($((i * 20 / 60)) min): $STATUS"
+            if [ "$STATUS" != "In Progress" ]; then break; fi
+          done
+
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarization did not succeed: $STATUS"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" || true
+            exit 1
+          fi
+
+          echo "Stapling the notarization ticket onto the DMG..."
+          xcrun stapler staple "$DMG"
+          echo "done"
 
       # The .pet file association is what makes double-clicking a saved pet
       # actually open the app — the whole point of the file. electron-builder
