@@ -61,11 +61,9 @@ export const SITE = {
   /// 'plausible' is the alternative if the site ever moves off Vercel; set
   /// `domain` for that one. 'none' turns it off, and the page says so.
   analytics: {
-    // Switched off until Web Analytics is enabled for the project in the Vercel
-    // dashboard — until then /_vercel/insights/script.js 404s, and the page must
-    // not claim to be counting visits when it is not. Change to 'vercel' after
-    // enabling and redeploy; nothing else needs to change.
-    provider: 'none',     // 'vercel' | 'plausible' | 'none'
+    // Web Analytics is enabled for the project (confirmed 2026-08-22:
+    // /_vercel/insights/script.js serves 200, not 404).
+    provider: 'vercel',   // 'vercel' | 'plausible' | 'none'
     domain: '',           // plausible only, e.g. 'stillaround.online'
     src: 'https://plausible.io/js/script.js',
   },
