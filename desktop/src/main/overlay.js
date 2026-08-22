@@ -42,7 +42,12 @@ export function createOverlay () {
       preload: path.join(here, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      // Sandboxed. contextIsolation already separates the worlds, but with
+      // sandbox off a preload runs with full Node, so any contextIsolation bypass
+      // becomes arbitrary code on the machine. These preloads only ever use
+      // contextBridge and ipcRenderer, both of which work sandboxed, so there is
+      // nothing to trade away for it.
+      sandbox: true,
       backgroundThrottling: false,
     },
   })

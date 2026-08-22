@@ -69,15 +69,54 @@ const whenAppReady = new Promise(resolve => { markReady = resolve })
 /// not load. A tiny custom protocol serves the app directory instead, and refuses
 /// anything outside it.
 function registerProtocol () {
+  // The separator is load-bearing. `startsWith(root)` alone lets a request escape
+  // into any *sibling* directory whose name merely begins with the root's — and
+  // electron-builder creates exactly such a sibling, app.asar.unpacked, right next
+  // to app.asar. So `app://bundle/../app.asar.unpacked/...` passed the check and
+  // was served. Comparing against root + separator closes that; the root itself is
+  // still allowed on its own.
+  const rootPrefix = root.endsWith(path.sep) ? root : root + path.sep
+
   protocol.handle('app', request => {
     const url = new URL(request.url)
     const target = path.normalize(path.join(root, decodeURIComponent(url.pathname)))
-    if (!target.startsWith(root)) {
+    if (target !== root && !target.startsWith(rootPrefix)) {
       return new Response('Not found', { status: 404 })
     }
     return net.fetch(`file://${target}`)
   })
 }
+
+/// Nothing in this app is a browser, so nothing in it should behave like one.
+///
+/// Without this, any page loaded in any window — including one reached by a link,
+/// or by a compromised CDN script calling location.assign — inherits that window's
+/// preload bridge and renders inside the app's own frame, which is the ideal place
+/// to ask someone for their Apple ID. Navigation stays on app://; everything else
+/// opens in the real browser, where the address bar tells the truth.
+function lockNavigation (win) {
+  const isOurs = u => {
+    try { return new URL(u).protocol === 'app:' } catch { return false }
+  }
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isOurs(url)) return
+    event.preventDefault()
+    if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url)
+  })
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//.test(url)) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
+  // A renderer should never be able to attach one of these.
+  win.webContents.on('will-attach-webview', event => event.preventDefault())
+}
+
+// Applied here rather than at each window, so a window added later cannot quietly
+// miss it — every webContents this app ever creates passes through this event.
+app.on('web-contents-created', (_event, contents) => lockNavigation({ webContents: contents }))
 
 app.whenReady().then(async () => {
   registerProtocol()
