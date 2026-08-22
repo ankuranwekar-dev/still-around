@@ -8,6 +8,14 @@ on:
   push:
     branches: [main]
 
+# A fork's pull request runs this workflow with a read-only token by default —
+# that is what already keeps the release secrets unreachable from an outside PR.
+# This says so explicitly, so a later edit that adds a step needing write access
+# fails loudly asking for permission, rather than quietly inheriting it because
+# nothing here ever said it shouldn't have it.
+permissions:
+  contents: read
+
 jobs:
   shot3d:
     runs-on: macos-latest

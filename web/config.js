@@ -12,16 +12,15 @@ export const SITE = {
 
   /// Where the desktop builds live.
   ///
-  /// These point at the v1.0.0 tag specifically, because artifactName in
-  /// package.json bakes the version into the filename
-  /// (StillAround-mac-1.0.0.dmg) — the /releases/latest/download/ alias
-  /// would silently 404 the moment a new version tag changes that filename.
-  /// Update both URLs by hand on every release until artifactName drops
-  /// ${version}, at which point /latest/download/ becomes safe to use and
-  /// this stops being a manual step.
+  /// /releases/latest/download/ always serves whatever the most recent published
+  /// release contains — no version number in these URLs, and none to edit here on
+  /// the next release. That only holds because artifactName in package.json's
+  /// build config has no ${version} in it (StillAround-mac.dmg, not
+  /// StillAround-mac-1.2.5.dmg); if that ever changes back, these need pinning to
+  /// a tag again or they will serve last release's build under this release's name.
   downloads: {
-    mac: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.2.5/StillAround-mac-1.2.5.dmg',
-    windows: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.2.5/StillAround-win-1.2.5.exe',
+    mac: 'https://github.com/ankuranwekar-dev/still-around/releases/latest/download/StillAround-mac.dmg',
+    windows: 'https://github.com/ankuranwekar-dev/still-around/releases/latest/download/StillAround-win.exe',
     source: 'https://github.com/ankuranwekar-dev/still-around', // repository page
   },
 

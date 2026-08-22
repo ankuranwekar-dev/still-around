@@ -743,7 +743,16 @@ function gradeShot (shot, slotId) {
 function voteSpecies () {
   if (state.speciesLocked) return
   const votes = Object.values(state.shots).map(s => s.species).filter(Boolean)
-  if (!votes.length) return
+  // One photo is not a vote, it is a guess — and the detector can be confidently
+  // wrong: measured on a real animal, three photos out of sixteen read as the
+  // wrong species, one of them at 100% confidence. Confidence alone would not
+  // have caught that one. What acting on a single photo does catch someone doing
+  // is uploading their first photo and watching the slot art and live preview
+  // flip to the wrong animal before they have even added a second — a visible,
+  // confusing glitch for no gain, since the same single misread would just as
+  // easily have flipped it to the *right* answer by luck. Wait for a second
+  // photo to corroborate before trusting any of them.
+  if (votes.length < 2) return
   const dogs = votes.filter(v => v === 'dog').length
   setSpecies(dogs * 2 > votes.length ? Species.dog : Species.cat, { byUser: false })
 }

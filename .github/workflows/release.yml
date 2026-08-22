@@ -83,8 +83,25 @@ jobs:
       # Submits without --wait — confirmed elsewhere to return in a couple of
       # minutes rather than hang — and polls status in a loop this step
       # controls, so progress is visible in the log line by line instead of
-      # one opaque blocking call. Only notarizes the DMG (the thing actually
-      # distributed); the .app inside it was already signed above.
+      # one opaque blocking call.
+      #
+      # Two things get notarized and stapled here, not one, and the difference
+      # matters. Stapling only the DMG (the previous version of this step) left
+      # Gatekeeper needing an online call to Apple the first time anyone actually
+      # launched the app — because the staple lives on the DMG container, and it
+      # does not travel with the .app when someone drags it out to /Applications,
+      # which is the whole point of a DMG. Checked directly on a shipped build:
+      # `stapler validate` on the extracted .app reported no ticket at all. A
+      # user opening it offline, or from a machine with a firewall between it and
+      # Apple, would have been blocked on first launch with no warning this could
+      # happen. So the .app is notarized and stapled *first*, and the DMG is then
+      # rebuilt around that already-stapled .app with plain hdiutil rather than
+      # by re-running electron-builder — asking electron-builder to package a
+      # second time risks it re-signing (undoing the staple) or picking a
+      # different identity, and the DMG layout here is simple enough (one app,
+      # one Applications symlink) not to need it. The rebuilt DMG is notarized
+      # and stapled too, so mounting it never prompts either — belt and braces,
+      # and cheap, since everything inside it already carries a valid ticket.
       - name: Notarize and staple
         if: runner.os == 'macOS'
         timeout-minutes: 35
@@ -94,35 +111,64 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -e
-          DMG=$(ls release/*.dmg | head -1)
-          echo "Submitting $DMG for notarization (not waiting on notarytool itself — that's the part that hangs)..."
-          SUBMIT_OUT=$(xcrun notarytool submit "$DMG" \
-            --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" \
-            --output-format json)
-          echo "$SUBMIT_OUT"
-          SUBMISSION_ID=$(echo "$SUBMIT_OUT" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
-          echo "submission id: $SUBMISSION_ID"
 
-          STATUS="In Progress"
-          for i in $(seq 1 80); do
-            sleep 20
-            INFO=$(xcrun notarytool info "$SUBMISSION_ID" \
+          # Submits $1, polls until it leaves "In Progress", prints the notary
+          # log and fails the step on anything but Accepted. Used for the .app
+          # zip and the rebuilt DMG in turn.
+          notarize () {
+            local target="$1"
+            echo "Submitting $target for notarization (not waiting on notarytool itself — that's the part that hangs)..."
+            local submit_out submission_id status info
+            submit_out=$(xcrun notarytool submit "$target" \
               --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" \
               --output-format json)
-            STATUS=$(echo "$INFO" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
-            echo "check $i ($((i * 20 / 60)) min): $STATUS"
-            if [ "$STATUS" != "In Progress" ]; then break; fi
-          done
+            echo "$submit_out"
+            submission_id=$(echo "$submit_out" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+            echo "submission id: $submission_id"
 
-          if [ "$STATUS" != "Accepted" ]; then
-            echo "Notarization did not succeed: $STATUS"
-            xcrun notarytool log "$SUBMISSION_ID" \
-              --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" || true
-            exit 1
-          fi
+            status="In Progress"
+            for i in $(seq 1 80); do
+              sleep 20
+              info=$(xcrun notarytool info "$submission_id" \
+                --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" \
+                --output-format json)
+              status=$(echo "$info" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+              echo "check $i ($((i * 20 / 60)) min): $status"
+              if [ "$status" != "In Progress" ]; then break; fi
+            done
 
+            if [ "$status" != "Accepted" ]; then
+              echo "Notarization did not succeed: $status"
+              xcrun notarytool log "$submission_id" \
+                --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" || true
+              exit 1
+            fi
+          }
+
+          APP="release/mac-universal/Still Around.app"
+          OLD_DMG=$(ls release/*.dmg | head -1)
+
+          echo "--- stage 1: the .app itself, so the staple travels when it is copied out of the DMG ---"
+          ditto -c -k --keepParent "$APP" /tmp/app-for-notary.zip
+          notarize /tmp/app-for-notary.zip
+          echo "Stapling the notarization ticket onto the .app..."
+          xcrun stapler staple "$APP"
+
+          echo "--- rebuilding the DMG around the now-stapled .app ---"
+          # electron-builder is not re-run: doing that risks re-signing the .app,
+          # which would silently discard the staple just applied above. The
+          # layout is simple enough (the app, plus a symlink so dragging it to
+          # Applications works) to reassemble directly.
+          rm -rf /tmp/dmg-root && mkdir -p /tmp/dmg-root
+          cp -R "$APP" /tmp/dmg-root/
+          ln -s /Applications /tmp/dmg-root/Applications
+          rm -f "$OLD_DMG" "$OLD_DMG.blockmap"
+          hdiutil create -volname "Still Around" -srcfolder /tmp/dmg-root -ov -format UDZO "$OLD_DMG"
+
+          echo "--- stage 2: the DMG container, so mounting it never has to ask Apple either ---"
+          notarize "$OLD_DMG"
           echo "Stapling the notarization ticket onto the DMG..."
-          xcrun stapler staple "$DMG"
+          xcrun stapler staple "$OLD_DMG"
           echo "done"
 
       # The .pet file association is what makes double-clicking a saved pet

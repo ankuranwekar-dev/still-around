@@ -68,6 +68,42 @@ const whenAppReady = new Promise(resolve => { markReady = resolve })
 /// The renderer is plain ES modules with relative imports, which `file://` will
 /// not load. A tiny custom protocol serves the app directory instead, and refuses
 /// anything outside it.
+// Every remote origin any page this app serves is allowed to touch, and nothing
+// guessed: captured from a real run of the studio, downloading the real vision
+// models to completion, and watching what actually crossed the network. Source
+// inspection alone would have missed us.aws.cdn.hf.co entirely — it never appears
+// as a literal string anywhere in this codebase, only inside the library's own
+// redirect chain — which is exactly the kind of thing a hand-written policy gets
+// wrong and only discovers when a real download breaks in front of a real person.
+//
+//   script-src   the transformers.js library itself, from jsdelivr
+//   connect-src  the model weights it then downloads, from huggingface's CDN
+//   style-src    Google Fonts' stylesheet; 'unsafe-inline' covers this app's many
+//                inline style="" attributes — rewriting all of them into classes
+//                is a real project, not a line item in a hardening pass
+//   font-src     the font files that stylesheet references
+//   worker-src   pet-worker.js, loaded as a module worker by personas.js
+//   media-src    the local <video> preview when someone uses the one-clip capture
+//                shortcut — blob:, not a remote origin, but default-src 'none'
+//                blocks even same-origin blob: media unless told otherwise
+//   img-src      likewise for photos and canvases handled as blob: or data:
+//
+// No <form> exists anywhere in what this serves, so form-action is closed
+// outright rather than merely restricted.
+const CSP = [
+  "default-src 'none'",
+  "script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'",
+  "connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://us.aws.cdn.hf.co",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ')
+
 function registerProtocol () {
   // The separator is load-bearing. `startsWith(root)` alone lets a request escape
   // into any *sibling* directory whose name merely begins with the root's — and
@@ -77,13 +113,20 @@ function registerProtocol () {
   // still allowed on its own.
   const rootPrefix = root.endsWith(path.sep) ? root : root + path.sep
 
-  protocol.handle('app', request => {
+  protocol.handle('app', async request => {
     const url = new URL(request.url)
     const target = path.normalize(path.join(root, decodeURIComponent(url.pathname)))
     if (target !== root && !target.startsWith(rootPrefix)) {
       return new Response('Not found', { status: 404 })
     }
-    return net.fetch(`file://${target}`)
+    const response = await net.fetch(`file://${target}`)
+    // Only documents carry a policy — attaching one to every .js and .png this
+    // serves would do nothing (a CSP header only applies to the document that
+    // declares it) except make each response slightly bigger for no reason.
+    if (!target.endsWith('.html')) return response
+    const headers = new Headers(response.headers)
+    headers.set('Content-Security-Policy', CSP)
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
   })
 }
 
