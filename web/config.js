@@ -46,7 +46,7 @@ export const SITE = {
   /// for. In Stripe, describe the item as support for the software — do not use
   /// their "donation" preset, which represents it as the thing it must not be.
   /// Leave blank and every trace of this stays hidden.
-  supportUrl: '',
+  supportUrl: 'https://paypal.me/AnkurAnwekar',
   supportLabel: 'Support this project',
   supportBlurb: 'Still Around is free, and always will be. If it was worth something to you, you can chip in towards the work behind it.',
   supportSmallPrint: 'A voluntary payment for the software — not a charitable donation, and not collected on behalf of any cause or organisation.',
