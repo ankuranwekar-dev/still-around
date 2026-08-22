@@ -347,19 +347,23 @@ function samplePhoto (image, mask) {
   // is darker than lit ginger, but it still has no hue, while ginger keeps its
   // hue in shadow. Luminance stays only as a floor, to keep black fur — equally
   // unsaturated — out of the white count.
-  const WHITE_SAT = 0.16
+  // Which test applies depends on whether this animal has any colour at all.
+  //
+  // On a coloured animal, fur with no hue is white fur, whatever its brightness —
+  // that is the test that stops a white-and-ginger cat reporting itself 20% white
+  // and rendering grey. But on a grey or black cat *all* the fur has no hue, and
+  // the same test calls the whole animal white: it put a grey tabby's chest at 66%
+  // white when it is 15%. So the animal is asked first whether it owns any real
+  // colour, and only then is hue allowed to define white.
+  const coloured = points.filter(p => p.c.s > 0.30).length / points.length
   const whiteFloor = Math.max(0.32, Math.min(0.55, median * 0.72))
-  let isWhite = c => c.s < WHITE_SAT && c.l > whiteFloor
-
-  // The exception that keeps a grey or cream cat working: if almost everything
-  // reads as white there is no coat left to measure, which means this animal
-  // genuinely has no saturated colour. Fall back to the brightness split so the
-  // pale colour itself becomes the coat rather than the animal coming back blank.
-  const paleShare = points.filter(p => isWhite(p.c)).length / points.length
-  if (paleShare > 0.86) {
-    const cut = Math.max(0.55, Math.min(0.84, Math.max(otsu(lums), median + 0.10)))
-    isWhite = c => c.l > cut && c.s < 0.30
-  }
+  const isWhite = coloured >= 0.06
+    ? c => c.s < 0.16 && c.l > whiteFloor
+    : (() => {
+        // Monochrome: white is the bright end, as it always was here.
+        const cut = Math.max(0.55, Math.min(0.84, Math.max(otsu(lums), median + 0.10)))
+        return c => c.l > cut && c.s < 0.30
+      })()
 
   const whiteFraction = points.filter(p => isWhite(p.c)).length / points.length
 
@@ -660,15 +664,30 @@ export function readFromShots (shots, { species = Species.cat, eye = null } = {}
     a.morphs.skullWidth = clamp((1.05 - face.aspect) * 0.8, -1, 1)
   }
 
-  if (front) {
-    a.chestWhite = clamp(front.chest)
-    a.socks = clamp((front.legs - 0.25) / 0.6)
-    measured.add('chestWhite'); measured.add('socks')
-    notes.push(`white chest ${Math.round(a.chestWhite * 100)}%, socks ${Math.round(a.socks * 100)}% from the sitting photo`)
-  } else if (side) {
-    // Second best: the belly line in a side view still shows a white front.
-    a.chestWhite = clamp(side.chest * 0.8)
-    a.socks = clamp((side.legs - 0.3) / 0.7)
+  // How much white the animal wears came from the sitting photo alone, which is
+  // the same mistake the colour reading made: on three real photos the sitting
+  // one was the weakest of the three at 42%, and it put a cat who is almost
+  // entirely white at 17% white on its own authority. A sitting view is still the
+  // best place to see a chest — that is the prior — but it does not get to be the
+  // only witness when better photographs are present.
+  const chest = blendMeasure([
+    { sample: front, prior: 1.00, value: front && front.chest },
+    { sample: side, prior: 0.55, value: side && side.chest * 0.8 },
+    { sample: face, prior: 0.30, value: face && face.chest },
+  ])
+  if (chest !== null) {
+    a.chestWhite = clamp(chest)
+    measured.add('chestWhite')
+    notes.push(`white chest ${Math.round(a.chestWhite * 100)}%`)
+  }
+
+  const socks = blendMeasure([
+    { sample: front, prior: 1.00, value: front && (front.legs - 0.25) / 0.6 },
+    { sample: side, prior: 0.60, value: side && (side.legs - 0.3) / 0.7 },
+  ])
+  if (socks !== null) {
+    a.socks = clamp(socks)
+    measured.add('socks')
   }
 
   if (tail) {
@@ -719,6 +738,21 @@ function shadowTrimmed (coat) {
 /// the ginger was demoted to markings. 2 fixes it, and is indistinguishable from
 /// 1.5 on grey tabby, solid black, cream and ginger-and-white test coats, because
 /// the 0.15 floor keeps the ordering of near-neutral clusters unchanged.
+/// One measurement, taken from whichever photographs can see it and weighted by
+/// how much each is worth believing: the slot's own suitability multiplied by the
+/// grade the studio gave that photo. Returns null when nobody can see it.
+function blendMeasure (candidates) {
+  const usable = candidates.filter(c => c.sample && Number.isFinite(c.value))
+  if (!usable.length) return null
+  let total = 0, sum = 0
+  for (const c of usable) {
+    const w = (c.sample.weight ?? 1) * c.prior
+    total += w
+    sum += c.value * w
+  }
+  return total > 0 ? sum / total : null
+}
+
 function identityScore (c) {
   return c.weight * (0.15 + saturation(c.colour)) ** 2
 }
