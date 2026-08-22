@@ -18,6 +18,7 @@ import * as Vision from '../analyzer/vision.js'
 import { readFromShots } from '../analyzer/analyze.js'
 import { framesFromVideo, frameFromImage } from '../analyzer/frames.js'
 import { SHOTS, ESSENTIAL, SLOT_ART, SLOT_PET, shapeOf, scoreShot, assignShots } from '../analyzer/shots.js'
+import { scoreCapture } from '../analyzer/quality.js'
 import { renderFrame } from '../engine/index.js'
 
 const $ = id => document.getElementById(id)
@@ -555,11 +556,32 @@ function renderSlots () {
     el.appendChild(title)
     const hint = document.createElement('p')
     hint.textContent = filled ? 'Tap to use a different one' : shot.hint
-    el.appendChild(hint)
+    if (!(filled && filled.grade)) el.appendChild(hint)
     const tag = document.createElement('span')
     tag.className = 'tag'
-    tag.textContent = filled ? 'got it ✓' : (shot.essential ? 'please' : 'if you have one')
-    el.appendChild(tag)
+    if (filled?.grade) {
+      // A number and then, if it is not good enough, the one thing to change. The
+      // percentage on its own would just be a score with no move attached to it.
+      const g = filled.grade
+      tag.dataset.grade = g.verdict
+      tag.textContent = `${Math.round(g.score * 100)}%${g.verdict === 'great' ? ' ✓' : ''}`
+      el.dataset.grade = g.verdict
+      const why = document.createElement('p')
+      why.className = 'why'
+      why.textContent = g.verdict === 'great' ? g.reasons[0] : g.reasons[0]
+      el.appendChild(tag)
+      el.appendChild(why)
+      if (g.verdict === 'poor') {
+        const again = document.createElement('button')
+        again.className = 'again'
+        again.textContent = 'Try another photo'
+        again.addEventListener('click', e => { e.stopPropagation(); pickForSlot(shot.id) })
+        el.appendChild(again)
+      }
+    } else {
+      tag.textContent = filled ? 'got it ✓' : (shot.essential ? 'please' : 'if you have one')
+      el.appendChild(tag)
+    }
 
     const choose = () => pickForSlot(shot.id)
     el.addEventListener('click', choose)
@@ -637,7 +659,7 @@ function pickForSlot (id) {
         setTimeout(hideProgress, 2600)
         return
       }
-      state.shots[id] = shot
+      state.shots[id] = gradeShot(shot, id)
       voteSpecies()
       hideProgress()
       refreshCapture()
@@ -672,7 +694,17 @@ async function prepareShot (image) {
   }
   if (!mask) mask = segment(small).mask
 
-  return { image, small, mask, species, uncertain, shape: shapeOf(mask, small.width, small.height) }
+  const shape = shapeOf(mask, small.width, small.height)
+  return { image, small, mask, species, uncertain, shape }
+}
+
+/// Attach a quality reading for the slot a shot is going into. Done here rather
+/// than inside prepareShot because the same photograph is worth more in one slot
+/// than another, and the slot is not known until it is placed.
+function gradeShot (shot, slotId) {
+  if (!shot) return shot
+  shot.grade = scoreCapture(shot, slotId, shot.shape ? scoreShot(shot.shape) : null)
+  return shot
 }
 
 function voteSpecies () {
@@ -683,16 +715,47 @@ function voteSpecies () {
   setSpecies(dogs * 2 > votes.length ? Species.dog : Species.cat, { byUser: false })
 }
 
+/// A photo this weak is not evidence. It can stay in its slot — throwing away
+/// someone's photograph without asking is rude, and they may have nothing better
+/// — but it does not count towards being ready to build.
+const USABLE = 0.50
+const GOOD = 0.80
+
+// A missing shot is not a usable one. Written as `!shot?.grade || ...` first,
+// which quietly returned true for an empty slot and enabled Build with one photo
+// in a screen that needs two.
+const usable = shot => Boolean(shot) && (!shot.grade || shot.grade.score >= USABLE)
+
 function refreshCapture () {
   renderSlots()
   const any = Object.keys(state.shots).length > 0
-  // An empty stage with a caption promising a pet is just a blank box.
-  $('peek').classList.toggle('hidden', !any)
-  const haveEssentials = ESSENTIAL.every(id => state.shots[id])
+
+  // The stage is now visible from the very start, with the invitation on it. An
+  // empty box you have to imagine a pet into is worth nothing; an empty box that
+  // says what will appear there, and then fills the moment the first photo lands,
+  // is the whole loop this screen is trying to teach.
+  $('peek').classList.remove('hidden')
+  $('peek').dataset.empty = any ? 'no' : 'yes'
+
+  const haveEssentials = ESSENTIAL.every(id => usable(state.shots[id]))
   $('analyse').disabled = !haveEssentials
-  $('peek-label').textContent = haveEssentials
-    ? 'Looking good. Build them whenever you like — you can still adjust everything after.'
-    : `Add ${ESSENTIAL.filter(id => !state.shots[id]).map(id => SHOTS.find(s => s.id === id).title.toLowerCase()).join(' and ')} to get started.`
+
+  const weak = Object.entries(state.shots)
+    .filter(([, shot]) => shot.grade && shot.grade.score < GOOD)
+    .map(([id]) => SHOTS.find(s => s.id === id).title.toLowerCase())
+  const missing = ESSENTIAL.filter(id => !usable(state.shots[id]))
+    .map(id => SHOTS.find(s => s.id === id).title.toLowerCase())
+
+  if (!any) {
+    $('peek-label').textContent = 'Add a photo, and meet your pet right here.'
+  } else if (missing.length) {
+    $('peek-label').textContent = `This is them so far. Add ${missing.join(' and ')} to fill them in.`
+  } else if (weak.length) {
+    $('peek-label').textContent =
+      `Good enough to build. A sharper ${weak.join(' or ')} would make them look more like themselves.`
+  } else {
+    $('peek-label').textContent = 'That is a strong set — this should look like them.'
+  }
   updatePeek()
 }
 
@@ -707,7 +770,7 @@ let peekRunner = null
 let peekPending = false
 
 async function updatePeek () {
-  if (!Object.keys(state.shots).length) return
+  if (!Object.keys(state.shots).length) return   // nothing measured yet; the empty state is CSS
   if (peekPending) return
   peekPending = true
   try {
@@ -793,7 +856,7 @@ async function fromVideo (file) {
   // Everything except the face, which shape cannot judge — a back at close range
   // looks exactly like a face to a geometry test, so that one gets asked about.
   for (const id of ['side', 'front', 'tail']) {
-    if (filled[id]) state.shots[id] = filled[id]
+    if (filled[id]) state.shots[id] = gradeShot(filled[id], id)
   }
   voteSpecies()
   refreshCapture()
@@ -825,7 +888,7 @@ function offerFaces (candidates) {
     drawCutout(canvas, c)
     button.appendChild(canvas)
     button.addEventListener('click', () => {
-      state.shots.face = c
+      state.shots.face = gradeShot(c, 'face')
       state.selected = c
       $('face-pick').classList.add('hidden')
       voteSpecies()

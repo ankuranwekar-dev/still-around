@@ -419,3 +419,73 @@ footer a:hover { color: var(--accent); }
    used when it was one section of a long page. */
 .in-app #make { padding-top: 20px !important; }
 .in-app body { background: #fff; }
+
+
+/* ---------------------------------------------------------------------------
+   Per-photo grading, and the stage's empty state.
+
+   The likeness can only be as good as what it was measured from, and before
+   this the person found that out at the end, from a pet that looked wrong, with
+   no way to tell which of four photos was to blame. So each photo says how well
+   it read, and what to change when the answer is "not very".
+   --------------------------------------------------------------------------- */
+
+.slot .why {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  margin: 6px 0 0;
+}
+
+.slot .again {
+  margin-top: 8px;
+  font: inherit;
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+.slot .again:hover { background: var(--accent-soft); }
+
+/* The three verdicts. Colour alone never carries it — the number is always there,
+   and the sentence underneath says what to do. */
+.tag[data-grade="great"] { background: var(--mint); color: #1f6b58; }
+.tag[data-grade="ok"]    { background: var(--butter); color: #7a5a12; }
+.tag[data-grade="poor"]  { background: var(--blush); color: var(--accent-deep); }
+
+.slot[data-grade="poor"] { border-color: var(--peach); }
+
+/* The stage is on screen from the start now, with the invitation drawn on it. */
+.peek-invite {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 8% 12%;
+  pointer-events: none;
+}
+/* The frame is a fixed 210px square, which is nowhere near enough room for a
+   headline — so the empty canvas holds only a paw, and the invitation itself goes
+   in the wide column beside it where it can actually be big. */
+.peek-paw { font-size: 2.4rem; opacity: 0.28; }
+
+.peek[data-empty="yes"] .stage-frame { box-shadow: none; border: 1px dashed var(--peach); }
+.peek[data-empty="yes"] #peek-label {
+  font-family: var(--display);
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+/* Once a photo has landed the pet is the subject, so the invitation goes. */
+.peek[data-empty="no"] .peek-invite { display: none; }
