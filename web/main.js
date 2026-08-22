@@ -92,24 +92,27 @@ wireDownload('dl-mac', 'dl-mac-note', SITE.downloads.mac, 'mac', 'macOS')
 wireDownload('dl-win', 'dl-win-note', SITE.downloads.windows, 'windows', 'Windows')
 $('source-link').href = SITE.downloads.source || '#'
 
-if (SITE.donateUrl) {
-  // The block under the downloads, and the quiet one in the footer.
+if (SITE.supportUrl) {
+  // The block under the downloads, and the quiet one in the footer. The small
+  // print rides with the ask rather than living on some other page: what this
+  // payment is, and is not, has to be legible at the moment of paying.
   const block = $('support')
   if (block) {
     block.classList.remove('hidden')
-    $('support-title').textContent = SITE.donateLabel
-    $('support-blurb').textContent = SITE.donateBlurb || ''
+    $('support-title').textContent = SITE.supportLabel
+    $('support-blurb').textContent = SITE.supportBlurb || ''
+    $('support-fine').textContent = SITE.supportSmallPrint || ''
     const link = $('support-link')
-    link.href = SITE.donateUrl
-    link.textContent = SITE.donateLabel
+    link.href = SITE.supportUrl
+    link.textContent = SITE.supportLabel
     link.addEventListener('click', () => track('support'))
   }
-  $('donate').classList.remove('hidden')
-  const d = $('donate-link')
-  d.href = SITE.donateUrl
-  d.textContent = SITE.donateLabel
+  $('support-footer').classList.remove('hidden')
+  const d = $('support-footer-link')
+  d.href = SITE.supportUrl
+  d.textContent = SITE.supportLabel
   d.target = '_blank'
-  d.addEventListener('click', () => track('donate'))
+  d.addEventListener('click', () => track('support'))
 }
 
 // ------------------------------------------------------------- the two cats

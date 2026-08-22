@@ -101,7 +101,7 @@ still warns on first run there. "More info" → "Run anyway" gets past it.
 
 ### Before it goes live
 
-Fill in `web/config.js`: the download URLs, a donate link, and an analytics
+Fill in `web/config.js`: the download URLs, a support link, and an analytics
 domain if you want one. Everything there is public by design — the site is static
 and has no secrets to keep.
 

@@ -25,23 +25,31 @@ export const SITE = {
     source: 'https://github.com/ankuranwekar-dev/still-around', // repository page
   },
 
-  /// Support for the work, not a charitable appeal — and the distinction is not
-  /// cosmetic. Soliciting donations online from the UAE without a licence from
-  /// the Ministry of Community Development is a criminal offence under Federal
-  /// Decree-Law 34/2021, carrying prison and fines of AED 200,000-500,000, and it
-  /// explicitly covers websites and donation links. Paying someone for software
-  /// they made is an ordinary transaction and needs no licence.
+  /// Voluntary payment for the software. Not a donation, and the wording is not
+  /// decoration.
   ///
-  /// So the copy below asks people to support the project. What Ankur then does
-  /// with it is his own business and is said as a fact about him, not as the
-  /// thing being solicited. Do not reword this into "donate to feed street cats"
-  /// without a fundraising permit in hand.
+  /// Soliciting or promoting donations online from the UAE without a licence
+  /// from the Ministry of Community Development is a criminal offence under
+  /// Federal Decree-Law 34/2021 — imprisonment and AED 200,000-500,000 — and the
+  /// law names websites and donation links explicitly. Paying someone for
+  /// software they wrote is an ordinary commercial transaction and needs no
+  /// licence at all.
   ///
-  /// Any hosted checkout works: a Stripe Payment Link is the one this was written
-  /// for. Leave blank and the whole thing stays hidden.
-  donateUrl: '',
-  donateLabel: 'Support this project',
-  donateBlurb: 'Still Around is free and always will be. If it gave you something, you can put a little back — it keeps the project going, and some of it goes to the street cats around my building.',
+  /// The whole difference is what is being asked for. Everything below asks
+  /// people to support the work. Nothing below names a cause, a charity, an
+  /// animal or any use the money will be put to, because naming one turns this
+  /// into a fundraising appeal. If you want to fundraise for street cats, get a
+  /// permit first, or link to a charity that already holds one; do not edit this
+  /// copy into it.
+  ///
+  /// Any hosted checkout works; a Stripe Payment Link is what this was written
+  /// for. In Stripe, describe the item as support for the software — do not use
+  /// their "donation" preset, which represents it as the thing it must not be.
+  /// Leave blank and every trace of this stays hidden.
+  supportUrl: '',
+  supportLabel: 'Support this project',
+  supportBlurb: 'Still Around is free, and always will be. If it was worth something to you, you can chip in towards the work behind it.',
+  supportSmallPrint: 'A voluntary payment for the software — not a charitable donation, and not collected on behalf of any cause or organisation.',
 
   /// Cookieless analytics — how many people came and roughly from where, and
   /// nothing else. No cookies, no identifiers, no consent banner, because there

@@ -510,6 +510,16 @@ footer a:hover { color: var(--accent); }
 .support h3 { margin: 0 0 3px; font-size: 1.02rem; }
 .support p { margin: 0; color: var(--ink-soft); line-height: 1.5; }
 .support-paw { font-size: 1.5rem; flex: none; }
+
+/* What this payment is and is not, kept with the ask rather than on some other
+   page. Quieter than the ask, but not hidden — small print nobody can read is
+   not small print. */
+.support-fine {
+  margin-top: 6px !important;
+  color: var(--ink-faint) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45;
+}
 .support .btn { flex: none; }
 
 @media (max-width: 620px) {

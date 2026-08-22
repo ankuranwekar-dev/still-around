@@ -409,7 +409,7 @@ launch arg) are already recorded in memory.
 
 ### Phase 11 — ship (1 week)
 
-- Fill in `web/config.js`: download URLs, donate link, analytics domain.
+- Fill in `web/config.js`: download URLs, support link, analytics domain.
 - Signing. An Apple Developer certificate and a Windows code-signing
   certificate, set as `CSC_LINK` / `CSC_KEY_PASSWORD` repo secrets. Unsigned
   installers lose most would-be users at the SmartScreen dialog; for a project
