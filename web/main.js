@@ -33,21 +33,40 @@ if (DESKTOP) document.documentElement.classList.add('in-app')
 
 // ---------------------------------------------------------------- analytics
 
-/// Cookieless, and only if a domain was configured. No consent banner, because
-/// there is nothing to consent to.
-if (SITE.analytics?.domain) {
+/// Counting visits without watching people.
+///
+/// Never inside the desktop app: the app is not a website, nobody expects a
+/// program on their machine to phone home, and the studio it opens is this very
+/// page. Whatever is true of analytics here must not become true there.
+const analyticsMode = DESKTOP ? 'none' : (SITE.analytics?.provider || 'none')
+
+if (analyticsMode === 'vercel') {
+  // First-party: served from this domain, so nothing is sent to anyone else.
+  const s = document.createElement('script')
+  s.defer = true
+  s.src = '/_vercel/insights/script.js'
+  document.head.appendChild(s)
+} else if (analyticsMode === 'plausible' && SITE.analytics?.domain) {
   const s = document.createElement('script')
   s.defer = true
   s.dataset.domain = SITE.analytics.domain
   s.src = SITE.analytics.src
   document.head.appendChild(s)
-  $('analytics-note').textContent =
-    'We count page views with Plausible, which sets no cookies and records nothing about you personally.'
-} else {
-  $('analytics-note').textContent = 'No analytics, no cookies, no trackers on this page.'
+}
+
+// Said plainly, and kept true. A site whose whole promise is that it does not
+// look at your things cannot claim "no analytics" while counting visits — the
+// photos never leaving your device is the promise, and it is untouched by this.
+const note = $('analytics-note')
+if (note) {
+  note.textContent = analyticsMode === 'none'
+    ? 'No analytics, no cookies, no trackers on this page.'
+    : 'We count visits — how many, and which country — with no cookies and nothing that identifies you. Your photos are never part of it.'
 }
 
 function track (event) {
+  // Vercel's own name for a custom event, and Plausible's, from one call site.
+  if (window.va) window.va('event', { name: event })
   if (window.plausible) window.plausible(event)
 }
 

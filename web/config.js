@@ -30,13 +30,22 @@ export const SITE = {
   donateUrl: '',
   donateLabel: 'Buy me a coffee',
 
-  /// Cookieless analytics. Plausible is the default because it sets no cookies,
-  /// stores no personal data, and needs no consent banner — which matters when
-  /// the whole promise of the site is that it does not look at your things.
-  /// Set `domain` to your site and the script tag is added automatically.
+  /// Cookieless analytics — how many people came and roughly from where, and
+  /// nothing else. No cookies, no identifiers, no consent banner, because there
+  /// is nothing to consent to.
+  ///
+  /// 'vercel' is first-party: the script is served from this same domain at
+  /// /_vercel/insights, so no request leaves for anyone else and an ad-blocker
+  /// has nothing to block. It needs Web Analytics switched on for the project.
+  /// 'plausible' is the alternative if the site ever moves off Vercel; set
+  /// `domain` for that one. 'none' turns it off, and the page says so.
   analytics: {
-    provider: 'plausible',
-    domain: '', // e.g. 'stillaround.online'
+    // Switched off until Web Analytics is enabled for the project in the Vercel
+    // dashboard — until then /_vercel/insights/script.js 404s, and the page must
+    // not claim to be counting visits when it is not. Change to 'vercel' after
+    // enabling and redeploy; nothing else needs to change.
+    provider: 'none',     // 'vercel' | 'plausible' | 'none'
+    domain: '',           // plausible only, e.g. 'stillaround.online'
     src: 'https://plausible.io/js/script.js',
   },
 }
