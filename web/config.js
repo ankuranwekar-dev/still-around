@@ -20,8 +20,8 @@ export const SITE = {
   /// ${version}, at which point /latest/download/ becomes safe to use and
   /// this stops being a manual step.
   downloads: {
-    mac: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.2.0/StillAround-mac-1.2.0.dmg',
-    windows: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.2.0/StillAround-win-1.2.0.exe',
+    mac: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.2.1/StillAround-mac-1.2.1.dmg',
+    windows: 'https://github.com/ankuranwekar-dev/still-around/releases/download/v1.2.1/StillAround-win-1.2.1.exe',
     source: 'https://github.com/ankuranwekar-dev/still-around', // repository page
   },
 

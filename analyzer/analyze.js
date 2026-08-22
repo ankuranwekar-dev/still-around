@@ -332,8 +332,34 @@ function samplePhoto (image, mask) {
   // brighter than this animal generally is, not merely bright.
   const lums = points.map(p => p.c.l).sort((x, y) => x - y)
   const median = lums[Math.floor(lums.length / 2)]
-  const cut = Math.max(0.55, Math.min(0.84, Math.max(otsu(lums), median + 0.10)))
-  const isWhite = c => c.l > cut && c.s < 0.30
+
+  // White fur is fur with no colour in it — not fur that is bright.
+  //
+  // This used to key off luminance, holding the cut above the animal's own median
+  // so a tabby face filling the frame could not report itself 99% white. On a
+  // mostly-white animal that is self-defeating: the median *is* white, so a cut
+  // above it excludes most of the coat by construction. Measured on a real
+  // white-and-ginger cat, 20% of him came back white and the other 80% of his
+  // white fur landed in the coat pool as desaturated grey, where it outweighed
+  // the ginger four to one and was reported as his colour. He rendered grey.
+  //
+  // Saturation separates them cleanly and brightness does not: shaded white fur
+  // is darker than lit ginger, but it still has no hue, while ginger keeps its
+  // hue in shadow. Luminance stays only as a floor, to keep black fur — equally
+  // unsaturated — out of the white count.
+  const WHITE_SAT = 0.16
+  const whiteFloor = Math.max(0.32, Math.min(0.55, median * 0.72))
+  let isWhite = c => c.s < WHITE_SAT && c.l > whiteFloor
+
+  // The exception that keeps a grey or cream cat working: if almost everything
+  // reads as white there is no coat left to measure, which means this animal
+  // genuinely has no saturated colour. Fall back to the brightness split so the
+  // pale colour itself becomes the coat rather than the animal coming back blank.
+  const paleShare = points.filter(p => isWhite(p.c)).length / points.length
+  if (paleShare > 0.86) {
+    const cut = Math.max(0.55, Math.min(0.84, Math.max(otsu(lums), median + 0.10)))
+    isWhite = c => c.l > cut && c.s < 0.30
+  }
 
   const whiteFraction = points.filter(p => isWhite(p.c)).length / points.length
 
@@ -423,6 +449,30 @@ export function readAppearance (photos, { species = Species.cat, eye = null } = 
     if (kept.length && kept.length < samples.length) {
       notes.push(`ignored ${samples.length - kept.length} distant photo(s)`)
       used = kept
+    }
+  }
+
+  // Let the photographs vote on each other.
+  //
+  // Colour is pooled across every photo, so a single bad cutout does not merely
+  // fail — it poisons the whole reading. Measured on six real photos of one
+  // white-and-ginger cat: five agreed he was 70–83% white, the sixth had him
+  // sitting in a cardboard box the segmenter swallowed and reported 26%, and the
+  // pooled coat came out a washed-out tan paler than any individual good photo.
+  //
+  // How white an animal is is the most stable thing about it across photographs,
+  // which makes disagreement about it a reliable sign that one cutout is
+  // measuring furniture. The majority wins, and only ever with enough photos for
+  // "majority" to mean something.
+  if (used.length >= 3) {
+    const whites = used.map(s => s.whiteFraction).sort((x, y) => x - y)
+    const middle = whites[Math.floor(whites.length / 2)]
+    const agreeing = used.filter(s => Math.abs(s.whiteFraction - middle) <= 0.25)
+    if (agreeing.length >= Math.max(2, Math.ceil(used.length / 2))) {
+      if (agreeing.length < used.length) {
+        notes.push(`ignored ${used.length - agreeing.length} photo(s) that disagreed with the rest`)
+      }
+      used = agreeing
     }
   }
 
