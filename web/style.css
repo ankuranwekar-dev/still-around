@@ -489,3 +489,30 @@ footer a:hover { color: var(--accent); }
 
 /* Once a photo has landed the pet is the subject, so the invitation goes. */
 .peek[data-empty="no"] .peek-invite { display: none; }
+
+
+/* ---------------------------------------------------------------------------
+   Asking for support, once — under the download, where someone has just been
+   given the thing rather than before they have seen it work.
+   --------------------------------------------------------------------------- */
+
+.support {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--cream);
+}
+.support > div { flex: 1; min-width: 0; }
+.support h3 { margin: 0 0 3px; font-size: 1.02rem; }
+.support p { margin: 0; color: var(--ink-soft); line-height: 1.5; }
+.support-paw { font-size: 1.5rem; flex: none; }
+.support .btn { flex: none; }
+
+@media (max-width: 620px) {
+  .support { flex-direction: column; align-items: flex-start; }
+  .support .btn { width: 100%; text-align: center; }
+}

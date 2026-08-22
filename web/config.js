@@ -25,10 +25,23 @@ export const SITE = {
     source: 'https://github.com/ankuranwekar-dev/still-around', // repository page
   },
 
-  /// A tip jar, not a checkout. Ko-fi, Buy Me a Coffee and GitHub Sponsors all
-  /// work; leave blank to hide the donate section entirely.
+  /// Support for the work, not a charitable appeal — and the distinction is not
+  /// cosmetic. Soliciting donations online from the UAE without a licence from
+  /// the Ministry of Community Development is a criminal offence under Federal
+  /// Decree-Law 34/2021, carrying prison and fines of AED 200,000-500,000, and it
+  /// explicitly covers websites and donation links. Paying someone for software
+  /// they made is an ordinary transaction and needs no licence.
+  ///
+  /// So the copy below asks people to support the project. What Ankur then does
+  /// with it is his own business and is said as a fact about him, not as the
+  /// thing being solicited. Do not reword this into "donate to feed street cats"
+  /// without a fundraising permit in hand.
+  ///
+  /// Any hosted checkout works: a Stripe Payment Link is the one this was written
+  /// for. Leave blank and the whole thing stays hidden.
   donateUrl: '',
-  donateLabel: 'Buy me a coffee',
+  donateLabel: 'Support this project',
+  donateBlurb: 'Still Around is free and always will be. If it gave you something, you can put a little back — it keeps the project going, and some of it goes to the street cats around my building.',
 
   /// Cookieless analytics — how many people came and roughly from where, and
   /// nothing else. No cookies, no identifiers, no consent banner, because there

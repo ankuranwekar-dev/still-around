@@ -93,6 +93,17 @@ wireDownload('dl-win', 'dl-win-note', SITE.downloads.windows, 'windows', 'Window
 $('source-link').href = SITE.downloads.source || '#'
 
 if (SITE.donateUrl) {
+  // The block under the downloads, and the quiet one in the footer.
+  const block = $('support')
+  if (block) {
+    block.classList.remove('hidden')
+    $('support-title').textContent = SITE.donateLabel
+    $('support-blurb').textContent = SITE.donateBlurb || ''
+    const link = $('support-link')
+    link.href = SITE.donateUrl
+    link.textContent = SITE.donateLabel
+    link.addEventListener('click', () => track('support'))
+  }
   $('donate').classList.remove('hidden')
   const d = $('donate-link')
   d.href = SITE.donateUrl
