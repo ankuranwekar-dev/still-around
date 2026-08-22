@@ -357,8 +357,29 @@ function samplePhoto (image, mask) {
   // colour, and only then is hue allowed to define white.
   const coloured = points.filter(p => p.c.s > 0.30).length / points.length
   const whiteFloor = Math.max(0.32, Math.min(0.55, median * 0.72))
+  // A fixed saturation cutoff cannot survive real light. White fur takes on the
+  // colour of whatever is lighting it: under warm indoor bulbs Momo's white coat
+  // measures 0.17–0.24 saturation, sails past a fixed 0.16, and lands in the coat
+  // pool as cream — which is how three of his photos reported him 24–26% white
+  // when he is nearer 80%, and came back a pale greige. Meanwhile in daylight the
+  // same fur measures 0.04.
+  //
+  // So the cutoff is placed midway between this animal's two populations: the
+  // median saturation of its clearly-coloured pixels, and the median of the rest.
+  // A colour cast lifts both and the midpoint rides up with them; real colour
+  // pulls them apart and the midpoint sits in the gap. Across his photographs
+  // that reads 74–90% white against a true ~80, where the fixed cutoff ranged
+  // from 24% to 84% depending only on the bulb.
+  const sats = points.map(p => p.c.s).sort((x, y) => x - y)
+  const medianOf = arr => (arr.length ? arr[Math.floor(arr.length / 2)] : null)
+  const hotMedian = medianOf(sats.filter(v => v > 0.30))
+  const coolMedian = medianOf(sats.filter(v => v <= 0.30))
+  const whiteSat = hotMedian !== null && coolMedian !== null
+    ? Math.max(0.16, Math.min(0.40, (hotMedian + coolMedian) / 2))
+    : 0.16
+
   const isWhite = coloured >= 0.06
-    ? c => c.s < 0.16 && c.l > whiteFloor
+    ? c => c.s < whiteSat && c.l > whiteFloor
     : (() => {
         // Monochrome: white is the bright end, as it always was here.
         const cut = Math.max(0.55, Math.min(0.84, Math.max(otsu(lums), median + 0.10)))
