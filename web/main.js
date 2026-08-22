@@ -794,7 +794,11 @@ async function updatePeek () {
 
 function shotsForReading () {
   const out = {}
-  for (const [id, shot] of Object.entries(state.shots)) out[id] = { image: shot.small, mask: shot.mask }
+  for (const [id, shot] of Object.entries(state.shots)) {
+    // The grade the slot is already showing is also how much this photo should
+    // count when the readings are combined.
+    out[id] = { image: shot.small, mask: shot.mask, weight: shot.grade?.score }
+  }
   return out
 }
 

@@ -430,7 +430,14 @@ export function readAppearance (photos, { species = Species.cat, eye = null } = 
   const samples = []
   photos.forEach((p, i) => {
     const s = samplePhoto(p.image, p.mask)
-    if (s) { samples.push(s); notes.push(`photo ${i + 1}: ${s.pixels} px, ${Math.round(s.whiteFraction * 100)}% white`) }
+    if (s) {
+      // How much this photograph deserves to be believed, from the studio's own
+      // grading of it. Absent (the website's older callers, the video path), it
+      // counts fully, which is the previous behaviour exactly.
+      s.weight = typeof p.weight === 'number' ? Math.max(0.1, Math.min(1, p.weight)) : 1
+      samples.push(s)
+      notes.push(`photo ${i + 1}: ${s.pixels} px, ${Math.round(s.whiteFraction * 100)}% white`)
+    }
     else notes.push(`photo ${i + 1}: not enough of the animal to measure`)
   })
 
@@ -476,7 +483,24 @@ export function readAppearance (photos, { species = Species.cat, eye = null } = 
     }
   }
 
-  const coat = used.flatMap(s => s.coat)
+  // A poor photograph should not get the same vote as a good one.
+  //
+  // Pooling put every surviving photo in by pixel count, so a badly angled shot
+  // graded 42% counted for as much as a clear one graded 100% — measured on three
+  // real photos of the same cat, two weak ones pulled a white cat with a ginger
+  // cap into an all-over brown tabby. Contribution is squared confidence, which
+  // leaves a good photo untouched and reduces a poor one to a minority voice
+  // without silencing it, since it may still hold the only view of a tail.
+  const coat = used.flatMap(s => {
+    const w = s.weight ?? 1
+    if (w > 0.98) return s.coat
+    const keep = Math.max(1, Math.round(s.coat.length * Math.max(0.12, w * w)))
+    if (keep >= s.coat.length) return s.coat
+    const stride = s.coat.length / keep
+    const out = []
+    for (let i = 0; i < keep; i++) out.push(s.coat[Math.floor(i * stride)])
+    return out
+  })
   // The deepest shadows go because their hue is unreliable, not because they are
   // dark — clustering handles brightness on its own now.
   let pool = coat
@@ -489,13 +513,14 @@ export function readAppearance (photos, { species = Species.cat, eye = null } = 
   // that makes the animal recognisable is second. Pushing saturation
   // superlinearly lets a smaller, genuinely coloured cluster win, while a solid
   // grey pet still comes back grey because it has no saturated cluster to lose to.
-  const identity = c => c.weight * (0.15 + saturation(c.colour)) ** 1.5
+  const identity = c => c.weight * (0.15 + saturation(c.colour)) ** 2
   const clusters = chromaClusters(pool, 3).sort((x, y) => identity(y) - identity(x))
 
   if (clusters[0]) a.base = rgb(clusters[0].colour.r, clusters[0].colour.g, clusters[0].colour.b)
   if (clusters[1]) a.accent = rgb(clusters[1].colour.r, clusters[1].colour.g, clusters[1].colour.b)
 
-  const mean = key => used.reduce((s, x) => s + x[key], 0) / used.length
+  const totalWeight = used.reduce((sum, x) => sum + (x.weight ?? 1), 0) || 1
+  const mean = key => used.reduce((sum, x) => sum + x[key] * (x.weight ?? 1), 0) / totalWeight
   const white = mean('whiteFraction')
 
   a.patternContrast = clamp(mean('stripiness'))
@@ -559,6 +584,8 @@ export function readFromShots (shots, { species = Species.cat, eye = null } = {}
     if (!shot) return null
     const sample = samplePhoto(shot.image, shot.mask)
     if (!sample) { notes.push(`the "${id}" photo had too little of the animal in it`); return null }
+    // The studio's grade for this photo, so the good ones carry the reading.
+    sample.weight = typeof shot.weight === 'number' ? Math.max(0.1, Math.min(1, shot.weight)) : 1
     return sample
   }
 
@@ -567,11 +594,32 @@ export function readFromShots (shots, { species = Species.cat, eye = null } = {}
   const front = read('front')
   const tail = read('tail')
 
-  // Colour comes from the side view first — it sees the most fur in the most
-  // even light — and falls back to whatever else exists.
-  const colourSource = side || front || tail || face
-  if (colourSource) {
-    const pool = shadowTrimmed(colourSource.coat)
+  // Colour comes from every photograph there is, weighted.
+  //
+  // It used to come from exactly one — `side || front || tail || face` — on the
+  // reasoning that a side view sees the most fur in the most even light. That is
+  // a fair prior and a poor rule: measured on three real photos of one cat, the
+  // side shot graded 56%, the face shot graded 100%, and the colour was taken
+  // entirely from the 56% one. The best photograph the person supplied was not
+  // consulted at all, and a white cat with a ginger cap came out an all-over
+  // brown tabby. The prior survives as a thumb on the scale; the grade decides.
+  const COLOUR_PRIOR = { side: 1.0, front: 0.92, tail: 0.85, face: 0.78 }
+  const sources = [['side', side], ['front', front], ['tail', tail], ['face', face]]
+    .filter(([, sample]) => sample && sample.coat.length)
+    .map(([id, sample]) => ({ id, sample, w: (sample.weight ?? 1) * COLOUR_PRIOR[id] }))
+
+  if (sources.length) {
+    const strongest = Math.max(...sources.map(x => x.w))
+    const pool = shadowTrimmed(sources.flatMap(({ sample, w }) => {
+      const share = Math.max(0.12, (w / strongest) ** 2)
+      const trimmed = sample.coat
+      if (share > 0.98) return trimmed
+      const keep = Math.max(1, Math.round(trimmed.length * share))
+      const stride = trimmed.length / keep
+      const out = []
+      for (let i = 0; i < keep; i++) out.push(trimmed[Math.floor(i * stride)])
+      return out
+    }))
     const clusters = chromaClusters(pool, 3).sort((x, y) => identityScore(y) - identityScore(x))
     if (clusters[0]) { a.base = rgb(clusters[0].colour.r, clusters[0].colour.g, clusters[0].colour.b); measured.add('base') }
     if (clusters[1]) { a.accent = rgb(clusters[1].colour.r, clusters[1].colour.g, clusters[1].colour.b); measured.add('accent') }
@@ -662,6 +710,15 @@ function shadowTrimmed (coat) {
 
 /// Weight alone picks the washed-out fringe where white meets colour; pushing
 /// saturation superlinearly lets the colour that makes the animal recognisable win.
+/// Which cluster is the animal's colour, rather than merely its biggest patch.
+///
+/// Saturation is pushed superlinearly so a smaller, genuinely coloured cluster can
+/// beat a larger washed-out one — the fringe where white meets colour is always
+/// the bigger of the two on a white-and-ginger cat. At 1.5 that was still not
+/// enough once colour was pooled across photos: the pale fringe took the coat and
+/// the ginger was demoted to markings. 2 fixes it, and is indistinguishable from
+/// 1.5 on grey tabby, solid black, cream and ginger-and-white test coats, because
+/// the 0.15 floor keeps the ordering of near-neutral clusters unchanged.
 function identityScore (c) {
-  return c.weight * (0.15 + saturation(c.colour)) ** 1.5
+  return c.weight * (0.15 + saturation(c.colour)) ** 2
 }
